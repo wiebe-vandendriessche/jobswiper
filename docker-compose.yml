@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  flask_microservice:
+    build:
+      context: ./flask_microservice
+    ports:
+      - "5000:5000"
+    networks:
+      - my_network
+
+  fastapi_microservice:
+    build:
+      context: ./fastapi_microservice
+    ports:
+      - "8000:8000"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
