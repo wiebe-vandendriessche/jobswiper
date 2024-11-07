@@ -2,9 +2,15 @@
 
 This repository contains the assignment submission of
 
-{% for student in students %}
-* {{student.record["First Name"]}} {{student.record["Last Name"]}}
-{% endfor %}
+
+* Bram Van Den Eeckhout
+
+* Jelle De Moerloose
+
+* Sanjog Singh
+
+* Wiebe Vandendriessche
+
 
 ## Tutorials
 
