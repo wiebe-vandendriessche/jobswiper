@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
@@ -14,22 +14,27 @@ services:
       - auth-network
     volumes:
       - mysql_data:/var/lib/mysql  # This ensures data persists
+      - ./init-db:/docker-entrypoint-initdb.d
 
-  fastapi:
-    build: .
+
+  fastapi_app:
+    build:
+      context: ./app # Set the build context to the app directory
+      dockerfile: Dockerfile # Explicitly specify the Dockerfile location
     ports:
       - "8000:8000"
+    restart: always
     depends_on:
       - mysql
     environment:
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
       MYSQL_DB: auth_db
+
     networks:
       - auth-network
-
 volumes:
-  mysql_data:  # Named volume to persist MySQL data
+  mysql_data:
 
 networks:
   auth-network:
