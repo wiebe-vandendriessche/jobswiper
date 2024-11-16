@@ -3,7 +3,8 @@ uvicorn
 mysql-connector-python
 sqlalchemy
 pydantic
-passlib
 python-dotenv
 alembic
 python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
