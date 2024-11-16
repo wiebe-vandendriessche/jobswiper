@@ -34,6 +34,22 @@ services:
       ALGORITHM: HS256
     networks:
       - auth-network
+
+  api_gateway:
+    build:
+      context: ./api_gateway  # Set up a new folder for API Gateway
+      dockerfile: Dockerfile  # Dockerfile for the API Gateway
+    ports:
+      - "8080:8080"  # Expose API Gateway port
+    restart: always
+    depends_on:
+      - jwt_auth  # API Gateway depends on authentication service
+    environment:
+      AUTH_SERVICE_URL: "http://jwt_auth:8000"  # URL of the authentication service
+    networks:
+      - auth-network
+
+
 volumes:
   mysql_data:
 
