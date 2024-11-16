@@ -9,14 +9,16 @@ from models import Users
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
+import os
+
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
 
-SECRET_KEY = "bdd11da38917ecee54c080b2a3f9e64ee5dbb1d8b1cfca708e1441b3f368f52ff804cb65c287503358077cf0b2bdd7d7443a911dca1e743e2507732b807f94dedd6927ef5ab38950d7b212f6af50bcdf5ce7a956acba743f1a982e57f839817e3582b85ee206554e9b3eac250f45d9d00259710722e35c33912f060d27b5855752ec18382aa6a9555563600538e30fa60a6506fcfc8104116cd28c02e0eb915b4a7aa9d1f23622c077bbc0e61d384317a93421b201693aab43ea35e15734bc4a284ae6abebc82bf455033197f45218338b280e97b443fc248a23956e9074c8227a5fb2bd46d9eaa9d22b0cef94d7f1af3ef97930b53db8711e5aeabeb8724a7d"
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv('SECRET_KEY')
+ALGORITHM = os.getenv('ALGORITHM')
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
