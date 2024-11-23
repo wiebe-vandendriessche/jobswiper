@@ -1,10 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 import httpx
-from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
 import os
 
 
@@ -29,31 +27,34 @@ class TokenResponse(BaseModel):
     token_type: str
 
 
-'''the bearer is created using the login endpoint (/auth/token), which is used to authenticate users and issue JWT tokens.'''    
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="login")
     
-# Define the OAuth2 bearer token dependency (for extracting token from request)
-async def get_current_user(token: str = Depends(oauth2_bearer)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        user_id: int = payload.get("id")
-        if username is None or user_id is None:
-            raise HTTPException(status_code=401, detail="Could not validate credentials")
-        return {"username": username, "id": user_id}
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
-
+# Updated get_current_user to delegate JWT verification to AuthService
+async def verify_token_get_user(token: str = Depends(oauth2_bearer)):
+    async with httpx.AsyncClient() as client:
+        '''
+        the token is retrieved from each bearer in the protected resources.
+        the token is then sent to the AuthService for verification.
+        the user information is then parsed from the AuthService
+        and returned to the protected route.
+        '''
+        try:
+            # Send the token to the AuthService for verification
+            response = await client.post(
+                f"{AUTH_SERVICE_URL}/auth/verify-token",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            response.raise_for_status()  # Raise error for invalid token
+            # Parse the user information from AuthService response
+            user_data = response.json()
+            return user_data
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=400, detail=f"Request to AuthService failed: {e}")
+        except httpx.HTTPStatusError:
+            raise HTTPException(status_code=401, detail="Invalid token")
 
 #--------------------------------------------- CALLING /AUTH/  TO CREATE USER ---------------------------------------------
-
-'''
-User Creation Endpoint (/sign-up):
-
-This route calls an external authentication API to create a user. It sends a POST request to the /auth/ endpoint of the authentication service with the username and password.
-It handles both success and failure cases from the external API.
-'''
 
 SIGNUP_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/"    
 
@@ -78,6 +79,12 @@ async def create_user_in_external_api(username: str, password: str):
 # Route to create a user
 @app.post("/sign-up")
 async def create_user(credentials: CreateUserRequest):
+    '''
+    User Creation Endpoint (/sign-up):
+
+    This route calls an external authentication API to create a user. It sends a POST request to the /auth/ endpoint of the authentication service with the username and password.
+    It handles both success and failure cases from the external API.
+    '''
     try:
         # Call the external API to create the user
         result = await create_user_in_external_api(credentials.username, credentials.password)
@@ -88,21 +95,18 @@ async def create_user(credentials: CreateUserRequest):
     
     
 #--------------------------------------------- CALLING /AUTH/TOKEN  TO RETRIEVE JWT TOKEN ---------------------------------------------
-    
-'''
-Login Endpoint (/login):
-
-This route facilitates user login by sending a POST request to the external authentication API's /auth/token endpoint.
-It uses the OAuth2PasswordRequestForm to extract the username and password from the form data sent by the user.
-It retrieves the token from the external service, which is then returned to the client.
-'''
-    
-    
-    
+        
 TOKEN_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/token"  # The external API's token endpoint
 
 @app.post("/login", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    '''
+    Login Endpoint (/login):
+
+    This route facilitates user login by sending a POST request to the external authentication API's /auth/token endpoint.
+    It uses the OAuth2PasswordRequestForm to extract the username and password from the form data sent by the user.
+    It retrieves the token from the external service, which is then returned to the client.
+    '''
     # Prepare the data to send to the external auth service (form data)
     data = {
         "username": form_data.username,
@@ -128,18 +132,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 '''
 These routes require a valid token to access.
-The get_current_user function is used to decode and validate the JWT token.
+The verify_token_get_user function is used to decode and validate the JWT token.
 If the token is valid, it returns the username and user ID, which are used in the protected routes.
 If the token is invalid or expired, the user receives a 401 Unauthorized response.
 '''
 
 @app.get("/protected-endpoint")
-async def protected_data(user: Annotated[dict, Depends(get_current_user)]):
+async def protected_data(user: Annotated[dict, Depends(verify_token_get_user)]):
     # This route is now protected. It can only be accessed by users with a valid token.
     return {"message": f"Hello {user['username']}, you have access!"}
 
 @app.get("/profile")
-async def profile(user: Annotated[dict, Depends(get_current_user)]):
+async def profile(user: Annotated[dict, Depends(verify_token_get_user)]):
     return {"profile": user}
 
 # add protected routes here
