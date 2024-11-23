@@ -1,31 +1,28 @@
 version: "3.8"
 
 services:
-  mysql:
+  mysqlauth:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: auth_db
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
-    ports:
-      - "3306:3306"
     networks:
-      - auth-network
+      - private-network
     volumes:
-      - mysql_data:/var/lib/mysql # This ensures data persists
+      - mysqlauth_data:/var/lib/mysql # This ensures data persists
       - ./init-db:/docker-entrypoint-initdb.d
 
   jwt_auth:
     build:
       context: ./jwt_auth # Set the build context to the app directory
       dockerfile: Dockerfile # Explicitly specify the Dockerfile location
-    ports:
-      - "8000:8000"
     restart: always
     depends_on:
-      - mysql
+      - mysqlauth
     environment:
+      DATABASE_SERVICE: mysqlauth
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
       MYSQL_DB: auth_db
@@ -33,29 +30,28 @@ services:
       SECRET_KEY: bdd11da38917ecee54c080b2a3f9e64ee5dbb1d8b1cfca708e1441b3f368f52ff804cb65c287503358077cf0b2bdd7d7443a911dca1e743e2507732b807f94dedd6927ef5ab38950d7b212f6af50bcdf5ce7a956acba743f1a982e57f839817e3582b85ee206554e9b3eac250f45d9d00259710722e35c33912f060d27b5855752ec18382aa6a9555563600538e30fa60a6506fcfc8104116cd28c02e0eb915b4a7aa9d1f23622c077bbc0e61d384317a93421b201693aab43ea35e15734bc4a284ae6abebc82bf455033197f45218338b280e97b443fc248a23956e9074c8227a5fb2bd46d9eaa9d22b0cef94d7f1af3ef97930b53db8711e5aeabeb8724a7d
       ALGORITHM: HS256
     networks:
-      - auth-network
+      - private-network
 
   api_gateway:
     build:
-      context: ./api_gateway  # Set up a new folder for API Gateway
-      dockerfile: Dockerfile  # Dockerfile for the API Gateway
+      context: ./api_gateway # Set up a new folder for API Gateway
+      dockerfile: Dockerfile # Dockerfile for the API Gateway
     ports:
-      - "8080:8080"  # Expose API Gateway port
+      - "8080:8080" # Expose API Gateway port
     restart: always
     depends_on:
-      - jwt_auth  # API Gateway depends on authentication service
+      - jwt_auth # API Gateway depends on authentication service
     environment:
-      AUTH_SERVICE_URL: "http://jwt_auth:8000"  # URL of the authentication service
+      AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       SECRET_KEY: bdd11da38917ecee54c080b2a3f9e64ee5dbb1d8b1cfca708e1441b3f368f52ff804cb65c287503358077cf0b2bdd7d7443a911dca1e743e2507732b807f94dedd6927ef5ab38950d7b212f6af50bcdf5ce7a956acba743f1a982e57f839817e3582b85ee206554e9b3eac250f45d9d00259710722e35c33912f060d27b5855752ec18382aa6a9555563600538e30fa60a6506fcfc8104116cd28c02e0eb915b4a7aa9d1f23622c077bbc0e61d384317a93421b201693aab43ea35e15734bc4a284ae6abebc82bf455033197f45218338b280e97b443fc248a23956e9074c8227a5fb2bd46d9eaa9d22b0cef94d7f1af3ef97930b53db8711e5aeabeb8724a7d
-      ALGORITHM: HS256    
+      ALGORITHM: HS256
     networks:
-      - auth-network
-
+      - private-network
 
 volumes:
-  mysql_data:
+  mysqlauth_data:
 
 
 networks:
-  auth-network:
+  private-network:
     driver: bridge

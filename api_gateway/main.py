@@ -9,30 +9,37 @@ import os
 
 
 # JWT settings (these should match what you have in your Auth Service)
-SECRET_KEY = os.getenv('SECRET_KEY')
-ALGORITHM = os.getenv('ALGORITHM')
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 
 app = FastAPI()
+# include gateway endpoints to Profile Management Service
+
 
 # Authentication service URL from environment variable
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL")
 if not AUTH_SERVICE_URL:
-    raise HTTPException(status_code=500, detail="AUTH_SERVICE_URL is not set in environment variables")
+    raise HTTPException(
+        status_code=500, detail="AUTH_SERVICE_URL is not set in environment variables"
+    )
+
 
 class CreateUserRequest(BaseModel):
     username: str
     password: str
-    
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
 
 
-'''the bearer is created using the login endpoint (/auth/token), which is used to authenticate users and issue JWT tokens.'''    
+"""the bearer is created using the login endpoint (/auth/token), which is used to authenticate users and issue JWT tokens."""
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="login")
-    
+
+
 # Define the OAuth2 bearer token dependency (for extracting token from request)
 async def get_current_user(token: str = Depends(oauth2_bearer)):
     try:
@@ -40,30 +47,32 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
-            raise HTTPException(status_code=401, detail="Could not validate credentials")
+            raise HTTPException(
+                status_code=401, detail="Could not validate credentials"
+            )
         return {"username": username, "id": user_id}
     except JWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
 
-#--------------------------------------------- CALLING /AUTH/  TO CREATE USER ---------------------------------------------
+# --------------------------------------------- CALLING /AUTH/  TO CREATE USER ---------------------------------------------
 
-'''
+"""
 User Creation Endpoint (/sign-up):
 
 This route calls an external authentication API to create a user. It sends a POST request to the /auth/ endpoint of the authentication service with the username and password.
 It handles both success and failure cases from the external API.
-'''
+"""
 
-SIGNUP_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/"    
+SIGNUP_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/"
+
 
 # Function to create a user in the external authentication API
 async def create_user_in_external_api(username: str, password: str):
     async with httpx.AsyncClient() as client:
         # Send a POST request to the external authentication API to create a user
         response = await client.post(
-            SIGNUP_AUTH_API_URL,
-            json={"username": username, "password": password}
+            SIGNUP_AUTH_API_URL, json={"username": username, "password": password}
         )
 
         if response.status_code == 201:
@@ -72,34 +81,39 @@ async def create_user_in_external_api(username: str, password: str):
             # Handle errors from the external API (e.g., username already exists)
             raise HTTPException(
                 status_code=response.status_code,
-                detail=f"Failed to create user: {response.text}"
+                detail=f"Failed to create user: {response.text}",
             )
-            
+
+
 # Route to create a user
 @app.post("/sign-up")
 async def create_user(credentials: CreateUserRequest):
     try:
         # Call the external API to create the user
-        result = await create_user_in_external_api(credentials.username, credentials.password)
+        result = await create_user_in_external_api(
+            credentials.username, credentials.password
+        )
         return result
     except HTTPException as e:
         # If the external API fails, pass the error message
         raise e
-    
-    
-#--------------------------------------------- CALLING /AUTH/TOKEN  TO RETRIEVE JWT TOKEN ---------------------------------------------
-    
-'''
+
+
+# --------------------------------------------- CALLING /AUTH/TOKEN  TO RETRIEVE JWT TOKEN ---------------------------------------------
+
+"""
 Login Endpoint (/login):
 
 This route facilitates user login by sending a POST request to the external authentication API's /auth/token endpoint.
 It uses the OAuth2PasswordRequestForm to extract the username and password from the form data sent by the user.
 It retrieves the token from the external service, which is then returned to the client.
-'''
-    
-    
-    
-TOKEN_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/token"  # The external API's token endpoint
+"""
+
+
+TOKEN_AUTH_API_URL = (
+    f"{AUTH_SERVICE_URL}/auth/token"  # The external API's token endpoint
+)
+
 
 @app.post("/login", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -117,29 +131,35 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             response.raise_for_status()  # Will raise an exception for 4xx/5xx status codes
             auth_data = response.json()  # Parse the JSON response
         except httpx.RequestError as e:
-            raise HTTPException(status_code=400, detail=f"Request to external auth service failed: {e}")
+            raise HTTPException(
+                status_code=400, detail=f"Request to external auth service failed: {e}"
+            )
         except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=response.status_code, detail=f"External auth service error: {e}")
-    
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"External auth service error: {e}",
+            )
+
     # Return the token and token type from the external service's response
     return TokenResponse(**auth_data)
 
-#--------------------------------------------- PROTECTED ROUTES (Authentication Required) ---------------------------------------------
 
-'''
+# --------------------------------------------- PROTECTED ROUTES (Authentication Required) ---------------------------------------------
+
+"""
 These routes require a valid token to access.
 The get_current_user function is used to decode and validate the JWT token.
 If the token is valid, it returns the username and user ID, which are used in the protected routes.
 If the token is invalid or expired, the user receives a 401 Unauthorized response.
-'''
+"""
+
 
 @app.get("/protected-endpoint")
 async def protected_data(user: Annotated[dict, Depends(get_current_user)]):
     # This route is now protected. It can only be accessed by users with a valid token.
     return {"message": f"Hello {user['username']}, you have access!"}
 
+
 @app.get("/profile")
 async def profile(user: Annotated[dict, Depends(get_current_user)]):
     return {"profile": user}
-
-# add protected routes here
