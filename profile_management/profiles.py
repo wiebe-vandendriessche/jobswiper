@@ -1,11 +1,12 @@
-from typing import Annotated, cast
+from typing import Annotated, Any, Dict, List, Optional, cast
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import database
 from application_layer import ProfileManagementService
 from database import JobSeekerRepository, RecruiterRepository
-from domain_model import JobSeeker, Recruiter, UserProfile
+from domain_model import JobSeeker, Recruiter, Salary, UserProfile
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
@@ -26,7 +27,23 @@ service: ProfileManagementService = ProfileManagementService(
 )
 
 
-@router.post("/accounts", response_model=UserProfile)
+class JobSeekerUpdateRequest(
+    BaseModel
+):  # webapi object only --> not included in domain model
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    location: Optional[str] = None
+    availability: Optional[bool] = None
+    salary: Optional[Salary] = None
+    interests: Optional[List[str]] = None
+    qualifications: Optional[List[str]] = None
+
+
+class RecruiterUpdateRequest(BaseModel):
+    company_name: Optional[str] = None
+
+
+@router.post("/accounts")
 async def create_account(account_type: str, details: UserProfile):
     """
     Create a new job seeker or recruiter account.
@@ -70,12 +87,31 @@ async def get_account(username: str, db: Session = Depends(get_db)):
     - username: The username of the account to fetch.
     """
     # Retrieve account by username
-    job_seeker = await service.get(username)
-    recruiter = await service.get_recruiter_by_username(username)
+    try:
+        user = await service.get_user(username)
+    except NameError as e:
+        raise HTTPException(status_code=404, detail=f"{e}")
 
-    if job_seeker:
-        return job_seeker
-    elif recruiter:
-        return recruiter
-    else:
-        raise HTTPException(status_code=404, detail="Account not found")
+
+@router.put("/job_seeker/{username}")
+async def update_job_seeker(
+    username: str,
+    updates: JobSeekerUpdateRequest,
+):
+    try:
+        await service.update_job_seeker(username, updates.dict(exclude_unset=True))
+        return {"message": "JobSeeker profile updated successfully"}
+    except NameError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.put("/recruiter/{username}")
+async def update_recruiter(
+    username: str,
+    updates: RecruiterUpdateRequest,
+):
+    try:
+        await service.update_recruiter(username, company_name=updates.company_name)
+        return {"message": "Recruiter profile updated successfully"}
+    except NameError as e:
+        raise HTTPException(status_code=404, detail=str(e))

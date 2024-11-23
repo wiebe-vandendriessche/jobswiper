@@ -65,5 +65,13 @@ class ProfileManagementService:
                 recruiter.change_company(company_name)
             return
         raise NameError(f"Recruiter with username {username} does not exist.")
-    
-    async
+
+    async def get_user(self, username: str):
+        recruiter = await self.recruiter_repo.find_by_username(username)
+        jobseeker = await self.job_seeker_repo.find_by_username(username)
+        if recruiter:
+            return recruiter
+        if jobseeker:
+            return jobseeker
+        # in case no users are found
+        raise NameError(f"User with username {username} does not exist.")
