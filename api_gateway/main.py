@@ -7,25 +7,30 @@ import os
 
 
 # JWT settings (these should match what you have in your Auth Service)
-SECRET_KEY = os.getenv('SECRET_KEY')
-ALGORITHM = os.getenv('ALGORITHM')
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 
 app = FastAPI()
+# include gateway endpoints to Profile Management Service
+
 
 # Authentication service URL from environment variable
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL")
 if not AUTH_SERVICE_URL:
-    raise HTTPException(status_code=500, detail="AUTH_SERVICE_URL is not set in environment variables")
+    raise HTTPException(
+        status_code=500, detail="AUTH_SERVICE_URL is not set in environment variables"
+    )
+
 
 class CreateUserRequest(BaseModel):
     username: str
     password: str
-    
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
-
 
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="login")
@@ -54,7 +59,7 @@ async def verify_token_get_user(token: str = Depends(oauth2_bearer)):
         except httpx.HTTPStatusError:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-#--------------------------------------------- CALLING /AUTH/  TO CREATE USER ---------------------------------------------
+# --------------------------------------------- CALLING /AUTH/  TO CREATE USER ---------------------------------------------
 
 SIGNUP_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/"    
 
@@ -63,8 +68,7 @@ async def create_user_in_external_api(username: str, password: str):
     async with httpx.AsyncClient() as client:
         # Send a POST request to the external authentication API to create a user
         response = await client.post(
-            SIGNUP_AUTH_API_URL,
-            json={"username": username, "password": password}
+            SIGNUP_AUTH_API_URL, json={"username": username, "password": password}
         )
 
         if response.status_code == 201:
@@ -73,9 +77,10 @@ async def create_user_in_external_api(username: str, password: str):
             # Handle errors from the external API (e.g., username already exists)
             raise HTTPException(
                 status_code=response.status_code,
-                detail=f"Failed to create user: {response.text}"
+                detail=f"Failed to create user: {response.text}",
             )
-            
+
+
 # Route to create a user
 @app.post("/sign-up")
 async def create_user(credentials: CreateUserRequest):
@@ -87,7 +92,9 @@ async def create_user(credentials: CreateUserRequest):
     '''
     try:
         # Call the external API to create the user
-        result = await create_user_in_external_api(credentials.username, credentials.password)
+        result = await create_user_in_external_api(
+            credentials.username, credentials.password
+        )
         return result
     except HTTPException as e:
         # If the external API fails, pass the error message
@@ -97,6 +104,7 @@ async def create_user(credentials: CreateUserRequest):
 #--------------------------------------------- CALLING /AUTH/TOKEN  TO RETRIEVE JWT TOKEN ---------------------------------------------
         
 TOKEN_AUTH_API_URL = f"{AUTH_SERVICE_URL}/auth/token"  # The external API's token endpoint
+
 
 @app.post("/login", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -121,29 +129,35 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             response.raise_for_status()  # Will raise an exception for 4xx/5xx status codes
             auth_data = response.json()  # Parse the JSON response
         except httpx.RequestError as e:
-            raise HTTPException(status_code=400, detail=f"Request to external auth service failed: {e}")
+            raise HTTPException(
+                status_code=400, detail=f"Request to external auth service failed: {e}"
+            )
         except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=response.status_code, detail=f"External auth service error: {e}")
-    
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"External auth service error: {e}",
+            )
+
     # Return the token and token type from the external service's response
     return TokenResponse(**auth_data)
 
-#--------------------------------------------- PROTECTED ROUTES (Authentication Required) ---------------------------------------------
 
-'''
+# --------------------------------------------- PROTECTED ROUTES (Authentication Required) ---------------------------------------------
+
+"""
 These routes require a valid token to access.
 The verify_token_get_user function is used to decode and validate the JWT token.
 If the token is valid, it returns the username and user ID, which are used in the protected routes.
 If the token is invalid or expired, the user receives a 401 Unauthorized response.
-'''
+"""
+
 
 @app.get("/protected-endpoint")
 async def protected_data(user: Annotated[dict, Depends(verify_token_get_user)]):
     # This route is now protected. It can only be accessed by users with a valid token.
     return {"message": f"Hello {user['username']}, you have access!"}
 
+
 @app.get("/profile")
 async def profile(user: Annotated[dict, Depends(verify_token_get_user)]):
     return {"profile": user}
-
-# add protected routes here
