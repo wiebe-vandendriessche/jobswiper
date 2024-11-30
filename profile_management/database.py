@@ -12,7 +12,7 @@ import os
 from profile_management.domain_model import JobSeeker, Recruiter, Salary
 from profile_management.interfaces import IJobSeekerRepository, IRecruiterRepository
 
-DATABASE_URL = f"mysql+mysqlconnector://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@mysql:{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DB')}"
+DATABASE_URL = f"mysql+mysqlconnector://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@{os.getenv('DATABASE_SERVICE')}:{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DB')}"
 
 
 engine = create_engine(DATABASE_URL)

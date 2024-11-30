@@ -99,7 +99,7 @@ async def update_job_seeker(
     updates: JobSeekerUpdateRequest,
 ):
     try:
-        await service.update_job_seeker(username, updates.dict(exclude_unset=True))
+        await service.update_job_seeker(username, updates.model_dump())
         return {"message": "JobSeeker profile updated successfully"}
     except NameError as e:
         raise HTTPException(status_code=404, detail=str(e))
