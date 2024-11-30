@@ -2,7 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class Salary(BaseModel):
+class Salary:
 
     def __init__(self, min: float = 0, max: float = 300000):
         self.min = min
@@ -17,19 +17,19 @@ class Salary(BaseModel):
         if min is not None:
             if max is not None and min > max:
                 raise ValueError(
-                    "Minimum salary cannot be greater than maximum salary."
+                    "minimum salary cannot be greater than maximum salary."
                 )
             self.min = min
         if max is not None:
             if min is not None and max < min:
-                raise ValueError("Maximum salary cannot be less than minimum salary.")
+                raise ValueError("maximum salary cannot be less than minimum salary.")
             self.max = max
 
     def __repr__(self):
         return f"Salary(min={self.min}$, max={self.max}$')"
 
 
-class UserProfile(BaseModel):
+class UserProfile:
     def __init__(
         self,
         username: str,

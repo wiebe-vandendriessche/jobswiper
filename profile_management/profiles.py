@@ -6,6 +6,15 @@ from sqlalchemy.orm import Session
 import database
 from application_layer import ProfileManagementService
 from database import JobSeekerRepository, RecruiterRepository
+from rest_interfaces.profile_interfaces import (
+    IJobSeeker,
+    IRecruiter,
+    ISalary,
+    IUserProfile,
+    JobSeekerUpdateRequest,
+    RecruiterUpdateRequest,
+)
+
 from domain_model import JobSeeker, Recruiter, Salary, UserProfile
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -27,46 +36,55 @@ service: ProfileManagementService = ProfileManagementService(
 )
 
 
-class JobSeekerUpdateRequest(
-    BaseModel
-):  # webapi object only --> not included in domain model
-    email: Optional[str] = None
-    phone_number: Optional[str] = None
-    location: Optional[str] = None
-    availability: Optional[bool] = None
-    salary: Optional[Salary] = None
-    interests: Optional[List[str]] = None
-    qualifications: Optional[List[str]] = None
-
-
-class RecruiterUpdateRequest(BaseModel):
-    company_name: Optional[str] = None
-
-
 @router.post("/accounts")
-async def create_account(account_type: str, details: UserProfile):
+async def create_account(account_type: str, details: IUserProfile):
     """
     Create a new job seeker or recruiter account.
     - account_type: The type of account to create ("job_seeker" or "recruiter").
     - details: The details of the job seeker or recruiter.
     """
     if account_type == "job_seeker":
-        if not isinstance(details, JobSeeker):
+        if not isinstance(details, IJobSeeker):
             raise HTTPException(
                 status_code=400, detail="Invalid details for job seeker account"
             )
-        job_seeker = cast(JobSeeker, details)
+        job_seeker = cast(IJobSeeker, details)
+        job_seeker = JobSeeker(
+            job_seeker.username,
+            job_seeker.first_name,
+            job_seeker.last_name,
+            job_seeker.email,
+            job_seeker.interests,
+            job_seeker.qualifications,
+            job_seeker.location,
+            job_seeker.education_level,
+            job_seeker.years_of_experience,
+            job_seeker.availability,
+            Salary(job_seeker.salary.min, job_seeker.salary.max),
+            job_seeker.date_of_birth,
+            job_seeker.phone_number,
+        )
+
         try:
             await service.register_job_seeker(job_seeker)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"{e}")
 
     elif account_type == "recruiter":
-        if not isinstance(details, Recruiter):
+        if not isinstance(details, IRecruiter):
             raise HTTPException(
                 status_code=400, detail="Invalid details for recruiter account"
             )
-        recruiter = cast(Recruiter, details)
+        recruiter = cast(IRecruiter, details)
+        recruiter = Recruiter(
+            recruiter.username,
+            recruiter.first_name,
+            recruiter.last_name,
+            recruiter.email,
+            recruiter.location,
+            recruiter.company_name,
+            recruiter.phone_number,
+        )
         try:
             await service.register_recruiter(recruiter)
         except Exception as e:
@@ -80,7 +98,7 @@ async def create_account(account_type: str, details: UserProfile):
     )
 
 
-@router.get("/accounts/{username}", response_model=UserProfile)
+@router.get("/accounts/{username}")
 async def get_account(username: str, db: Session = Depends(get_db)):
     """
     Get the details of a job seeker or recruiter account by username.
@@ -89,6 +107,7 @@ async def get_account(username: str, db: Session = Depends(get_db)):
     # Retrieve account by username
     try:
         user = await service.get_user(username)
+        return user
     except NameError as e:
         raise HTTPException(status_code=404, detail=f"{e}")
 

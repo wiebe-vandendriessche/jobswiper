@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  mysqlauth:
+  mysql_auth:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: root_password
@@ -11,7 +11,7 @@ services:
     networks:
       - private-network
     volumes:
-      - mysqlauth_data:/var/lib/mysql # This ensures data persists
+      - msql_auth_data:/var/lib/mysql # This ensures data persists
       - ./init-db:/docker-entrypoint-initdb.d
 
   jwt_auth:
@@ -20,9 +20,9 @@ services:
       dockerfile: Dockerfile # Explicitly specify the Dockerfile location
     restart: always
     depends_on:
-      - mysqlauth
+      - mysql_auth
     environment:
-      DATABASE_SERVICE: mysqlauth
+      DATABASE_SERVICE: mysql_auth
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
       MYSQL_DB: auth_db
@@ -42,13 +42,43 @@ services:
     depends_on:
       - jwt_auth # API Gateway depends on authentication service
     environment:
-      AUTH_SERVICE_URL: "http://jwt_auth:8000"  # URL of the authentication service
+      AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
 
     networks:
       - private-network
 
+  mysql_profiles:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: profiles_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    networks:
+      - private-network
+    volumes:
+      - msql_profiles_data:/var/lib/mysql # This ensures data persists
+      - ./init-db:/docker-entrypoint-initdb.d
+
+  profile_management:
+    build:
+      context: ./profile_management # Set up a new folder for API Gateway
+      dockerfile: Dockerfile # Dockerfile for the API Gateway
+    restart: always
+    depends_on:
+      - mysql_profiles # API Gateway depends on authentication service
+    environment:
+      DATABASE_SERVICE: mysql_profiles
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DB: profiles_db
+      MYSQL_PORT: 3306
+    networks:
+      - private-network
+
 volumes:
-  mysqlauth_data:
+  msql_profiles_data:
+  msql_auth_data:
 
 
 networks:

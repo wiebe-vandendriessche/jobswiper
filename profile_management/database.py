@@ -1,16 +1,13 @@
 from typing import Optional
-from sqlalchemy import create_engine
+from sqlalchemy import Date, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, Float, Text, JSON
-from sqlalchemy.orm import relationship, Session
-from sqlalchemy.sql.sqltypes import Date
-from sqlalchemy.dialects.mysql import LONGTEXT
-from database import Base
+from sqlalchemy import Column, Integer, String, Float, JSON
+
 import os
 
-from profile_management.domain_model import JobSeeker, Recruiter, Salary
-from profile_management.interfaces import IJobSeekerRepository, IRecruiterRepository
+from domain_model import JobSeeker, Recruiter, Salary
+from interfaces import IJobSeekerRepository, IRecruiterRepository
 
 DATABASE_URL = f"mysql+mysqlconnector://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@{os.getenv('DATABASE_SERVICE')}:{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DB')}"
 

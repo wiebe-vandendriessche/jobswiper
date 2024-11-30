@@ -1,7 +1,7 @@
 from typing import Optional, List
 from abc import ABC, abstractmethod
 
-from profile_management.domain_model import JobSeeker, Recruiter
+from domain_model import JobSeeker, Recruiter
 
 
 # database adapter interfaces

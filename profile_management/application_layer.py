@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
-from profile_management.domain_model import Salary, JobSeeker, Recruiter
-from profile_management.interfaces import (
+from domain_model import Salary, JobSeeker, Recruiter
+from interfaces import (
     IChangedJobSeekerPublisher,
     IJobSeekerRepository,
     IRecruiterRepository,
