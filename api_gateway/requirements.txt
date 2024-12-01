@@ -1,5 +1,6 @@
 fastapi
 httpx
+redis
 uvicorn
 pydantic
 python-multipart

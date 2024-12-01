@@ -7,7 +7,6 @@ import os
 
 
 app = FastAPI()
-# include gateway endpoints to Profile Management Service
 
 
 # Authentication service URL from environment variable
