@@ -3,7 +3,7 @@ from sqlalchemy import Date, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Float, JSON
-
+from sqlalchemy.orm import Session
 import os
 
 from domain_model import JobSeeker, Recruiter, Salary
@@ -23,7 +23,7 @@ class JobSeekerModel(Base):
     __tablename__ = "job_seekers"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, nullable=False)
+    username = Column(String(255), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False)
@@ -43,7 +43,7 @@ class RecruiterModel(Base):
     __tablename__ = "recruiters"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, nullable=False)
+    username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False)
@@ -53,14 +53,13 @@ class RecruiterModel(Base):
 
 
 class JobSeekerRepository(IJobSeekerRepository):
-    def __init__(self, db):
-        self.db = db
+    def __init__(self, sessionmaker: sessionmaker):
+        self.sessionmaker = sessionmaker
 
     async def find_by_username(self, username: str) -> Optional[JobSeeker]:
+        db = next(self.get_db())
         job_seeker = (
-            self.db.query(JobSeekerModel)
-            .filter(JobSeekerModel.username == username)
-            .first()
+            db.query(JobSeekerModel).filter(JobSeekerModel.username == username).first()
         )
         if job_seeker:
             return JobSeeker(
@@ -77,11 +76,12 @@ class JobSeekerRepository(IJobSeekerRepository):
                 interests=job_seeker.interests,
                 qualifications=job_seeker.qualifications,
                 date_of_birth=job_seeker.date_of_birth,
+                id=job_seeker.id,
             )
         return None
 
     async def save(self, job_seeker: JobSeeker):
-
+        db = next(self.get_db())
         db_job_seeker = JobSeekerModel(
             username=job_seeker.username,
             first_name=job_seeker.first_name,
@@ -98,19 +98,27 @@ class JobSeekerRepository(IJobSeekerRepository):
             qualifications=job_seeker.qualifications,
             date_of_birth=job_seeker.date_of_birth,
         )
-        self.db.add(db_job_seeker)
-        self.db.commit()
+        if job_seeker.id:  # this is for when updating
+            db_job_seeker.id = job_seeker.id
+        db.merge(db_job_seeker)  # Checks if it exists for updates, otherwise create
+        db.commit()
+
+    def get_db(self):
+        db = self.sessionmaker()
+        try:
+            yield db
+        finally:
+            db.close()
 
 
 class RecruiterRepository(IRecruiterRepository):
-    def __init__(self, db):
-        self.db = db
+    def __init__(self, sessionmaker: sessionmaker):
+        self.sessionmaker = sessionmaker
 
     async def find_by_username(self, username: str) -> Optional[Recruiter]:
+        db = next(self.get_db())
         recruiter = (
-            self.db.query(RecruiterModel)
-            .filter(RecruiterModel.username == username)
-            .first()
+            db.query(RecruiterModel).filter(RecruiterModel.username == username).first()
         )
         if recruiter:
             return Recruiter(
@@ -121,10 +129,12 @@ class RecruiterRepository(IRecruiterRepository):
                 location=recruiter.location,
                 phone_number=recruiter.phone_number,
                 company_name=recruiter.company_name,
+                id=recruiter.id,
             )
         return None
 
     async def save(self, recruiter: Recruiter):
+        db = next(self.get_db())
         db_recruiter = RecruiterModel(
             username=recruiter.username,
             first_name=recruiter.first_name,
@@ -134,5 +144,14 @@ class RecruiterRepository(IRecruiterRepository):
             phone_number=recruiter.phone_number,
             company_name=recruiter.company_name,
         )
-        self.db.add(db_recruiter)
-        self.db.commit()
+        if recruiter.id:  # this is for when updating
+            db_recruiter.id = recruiter.id
+        db.merge(db_recruiter)  # Checks if it exists for updates, otherwise create
+        db.commit()
+
+    def get_db(self):
+        db = self.sessionmaker()
+        try:
+            yield db
+        finally:
+            db.close()

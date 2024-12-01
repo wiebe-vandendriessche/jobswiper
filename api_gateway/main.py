@@ -163,11 +163,6 @@ async def protected_data(user: Annotated[dict, Depends(verify_token_get_user)]):
     return {"message": f"Hello {user['username']}, you have access!"}
 
 
-@app.get("/profile")
-async def profile(user: Annotated[dict, Depends(verify_token_get_user)]):
-    return {"profile": user}
-
-
 # -------------------------------------------------Profile Management Service --------------------------------------------------------------------------
 from profiles import Profile_router
 

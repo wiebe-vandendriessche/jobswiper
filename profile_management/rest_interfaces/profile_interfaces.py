@@ -36,7 +36,7 @@ class JobSeekerUpdateRequest(
     email: Optional[str] = None
     phone_number: Optional[str] = None
     location: Optional[str] = None
-    availability: Optional[bool] = None
+    availability: Optional[str] = None
     salary: Optional[ISalary] = None
     interests: Optional[List[str]] = None
     qualifications: Optional[List[str]] = None

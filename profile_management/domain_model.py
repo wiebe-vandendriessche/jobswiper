@@ -38,6 +38,7 @@ class UserProfile:
         email: str,
         location: str,
         phone_number: Optional[str] = None,
+        id: Optional[int] = None,
     ):
         self.username = username
         self.first_name = first_name  # First name of the user
@@ -45,6 +46,7 @@ class UserProfile:
         self.email = email  # Email address of the user
         self.location = location  # Location of the user
         self.phone_number = phone_number  # Phone number of the user (optional)
+        self.id = id
 
     def update_contact_info(
         self, email: Optional[str] = None, phone_number: Optional[str] = None
@@ -79,9 +81,12 @@ class JobSeeker(UserProfile):
         salary: Salary = Salary(),
         date_of_birth: Optional[str] = None,
         phone_number: Optional[str] = None,
+        id: Optional[int] = None,
     ):
         # Initialize parent class with common attributes
-        super().__init__(username, first_name, last_name, email, location, phone_number)
+        super().__init__(
+            username, first_name, last_name, email, location, phone_number, id
+        )
 
         self.qualifications = qualifications  # List of qualifications
         self.salary = salary  # Desired salary range as a Salary object
@@ -130,18 +135,21 @@ class Recruiter(UserProfile):
         location: str,
         company_name: str,
         phone_number: Optional[str] = None,
+        id: Optional[int] = None,
     ):
         # Initialize parent class with common attributes
-        super().__init__(username, first_name, last_name, email, location, phone_number)
+        super().__init__(
+            username, first_name, last_name, email, location, phone_number, id
+        )
 
         self.company_name = company_name  # Name of the company
 
     def change_company(self, company: str):
         """Update company"""
-        self.company = company
+        self.company_name = company
 
     def __repr__(self):
         return (
-            f"Recruiter(company_name='{self.company_name}', email='{self.email}', industry='{self.industry}', "
+            f"Recruiter(company_name='{self.company_name}', email='{self.email}' "
             f"location='{self.location}', phone_number='{self.phone_number}')"
         )

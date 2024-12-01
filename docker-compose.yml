@@ -43,6 +43,7 @@ services:
       - jwt_auth # API Gateway depends on authentication service
     environment:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
+      PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
 
     networks:
       - private-network

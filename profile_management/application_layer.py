@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional
+from rest_interfaces.profile_interfaces import JobSeekerUpdateRequest
 from domain_model import Salary, JobSeeker, Recruiter
 from interfaces import (
     IChangedJobSeekerPublisher,
@@ -20,40 +21,40 @@ class ProfileManagementService:
     # self.publisher = publisher
 
     async def register_job_seeker(self, job_seeker: JobSeeker):
-        account = await self.job_seeker_repo.find_by_username(job_seeker.username)
-        if account:
-            raise NameError(f"User with username:{job_seeker.username} already exists")
+        exists = await self.check_existing(job_seeker.username)
+        if exists:
+            raise NameError(f"Username already has a coupled profile")
 
         await self.job_seeker_repo.save(job_seeker)
         # await self.publisher.createdProfile(job_seeker)
         return job_seeker
 
-    async def update_job_seeker(self, username: str, kwargs: Dict):
+    async def update_job_seeker(self, username: str, update: JobSeekerUpdateRequest):
         job_seeker = await self.job_seeker_repo.find_by_username(username)
         if job_seeker:
-            if "email" in kwargs:
-                job_seeker.update_contact_info(email=kwargs["email"])
-            if "phone_number" in kwargs:
-                job_seeker.update_contact_info(phone_number=kwargs["phone_number"])
-            if "location" in kwargs:
-                job_seeker.update_location(kwargs["location"])
-            if "availability" in kwargs:
-                job_seeker.update_availability(kwargs["availability"])
-            if "salary" in kwargs:
-                job_seeker.update_salary(kwargs["salary"])
-            if "interests" in kwargs:
-                job_seeker.update_interests(kwargs["interests"])
-            if "qualifications" in kwargs:
-                job_seeker.update_qualifications(kwargs["qualifications"])
+            if update.email:
+                job_seeker.update_contact_info(email=update.email)
+            if update.phone_number:
+                job_seeker.update_contact_info(phone_number=update.phone_number)
+            if update.location:
+                job_seeker.update_location(update.location)
+            if update.availability:
+                job_seeker.update_availability(update.availability)
+            if update.salary:
+                job_seeker.update_salary(update.salary.min, update.salary.max)
+            if update.interests:
+                job_seeker.update_interests(update.interests)
+            if update.qualifications:
+                job_seeker.update_qualifications(update.qualifications)
             await self.job_seeker_repo.save(job_seeker)
             # await self.publisher.updatedProfile(job_seeker)
             return
         raise NameError(f"User with username {username} does not exist.")
 
     async def register_recruiter(self, recruiter: Recruiter):
-        account = await self.recruiter_repo.find_by_username(recruiter.username)
-        if account:
-            raise NameError(f"User with username:{recruiter.username} already exists")
+        exists = await self.check_existing(recruiter.username)
+        if exists:
+            raise NameError(f"Username already has a coupled profile")
 
         await self.recruiter_repo.save(recruiter)
         return recruiter
@@ -63,6 +64,7 @@ class ProfileManagementService:
         if recruiter:
             if company_name:
                 recruiter.change_company(company_name)
+            await self.recruiter_repo.save(recruiter)
             return
         raise NameError(f"Recruiter with username {username} does not exist.")
 
@@ -75,3 +77,11 @@ class ProfileManagementService:
             return jobseeker
         # in case no users are found
         raise NameError(f"User with username {username} does not exist.")
+
+    async def check_existing(self, username: str):
+        account_js = await self.job_seeker_repo.find_by_username(username)
+        account_r = await self.recruiter_repo.find_by_username(username)
+        # If either returns a non-None object, the username exists
+        print(account_js)
+        print(account_r)
+        return account_js is not None or account_r is not None
