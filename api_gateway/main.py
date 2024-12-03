@@ -4,11 +4,21 @@ from typing import Annotated
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
 # include gateway endpoints to Profile Management Service
 
+
+# Allow requests from the frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Or ["*"] for all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Authentication service URL from environment variable
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL")

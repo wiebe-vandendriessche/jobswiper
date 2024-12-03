@@ -1,8 +1,17 @@
 import React from "react";
-import MainPage from "./MainPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import MainView from "./Views/MainView";
+import AuthView from "./Views/AuthView"; // Create this new component for Login and Sign-up
 
-const App = () => {
-  return <MainPage />;
-};
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainView />} />
+        <Route path="/auth" element={<AuthView />} />
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;
