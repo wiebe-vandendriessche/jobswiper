@@ -1,12 +1,17 @@
+import json
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 import httpx
+import redis
 from typing import Annotated
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from caching import cache_token, get_user_from_cached_token
+
 import os
 
 
 app = FastAPI()
+# redis caching database init:
 
 
 # Authentication service URL from environment variable
@@ -40,21 +45,28 @@ async def verify_token_get_user(token: str = Depends(oauth2_bearer)):
         and returned to the protected route.
         """
         try:
-            # Send the token to the AuthService for verification
-            response = await client.post(
-                f"{AUTH_SERVICE_URL}/auth/verify-token",
-                headers={"Authorization": f"Bearer {token}"},
-            )
-            response.raise_for_status()  # Raise error for invalid token
-            # Parse the user information from AuthService response
-            user_data = response.json()
-            return user_data
+            # check if in cache
+            user = get_user_from_cached_token(token)
+            if user:
+                return json.loads(user)
+            else:  # Send the token to the AuthService for verification
+                response = await client.post(
+                    f"{AUTH_SERVICE_URL}/auth/verify-token",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                response.raise_for_status()  # Raise error for invalid token
+                # Parse the user information from AuthService response
+                print(response.text)
+                cache_token(token, response.text)
+                return response.json()
         except httpx.RequestError as e:
             raise HTTPException(
                 status_code=400, detail=f"Request to AuthService failed: {e}"
             )
         except httpx.HTTPStatusError:
             raise HTTPException(status_code=401, detail="Invalid token")
+        except Exception as e:
+            raise HTTPException(status_code=501, detail=f"verifytoken failed: {e}")
 
 
 # --------------------------------------------- CALLING /AUTH/  TO CREATE USER ---------------------------------------------

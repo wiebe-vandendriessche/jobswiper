@@ -1,8 +1,10 @@
+import json
 import os
 from typing import Annotated, Union
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
 
+from caching import cache_profile, get_profile, remove_profile_cache
 from rest_interfaces.profile_interfaces import IJobSeeker, IRecruiter, IUserProfile, JobSeekerUpdateRequest, RecruiterUpdateRequest
 from main import verify_token_get_user
 
@@ -63,12 +65,16 @@ async def profile_get(
         raise HTTPException(
             status_code=403, detail="Username mismatch: Unauthorized action."
         )        
-    
+    #check in cache
+    cache=get_profile(user["username"])
+    if cache:
+        return json.loads(cache)
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts/{user["username"]}"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url)
             response.raise_for_status()  # Raise an error for HTTP errors
+            cache_profile(user["username"],response.text)
             return response.json()
         except httpx.HTTPStatusError as exc:
             # Raise an HTTPException with the same status code and error details
@@ -97,6 +103,8 @@ async def update_job_seeker(username: str, update_data: JobSeekerUpdateRequest,u
         try:
             response = await client.put(url, json=update_data.model_dump())
             response.raise_for_status()  # Raise an error for HTTP errors
+            #clear the original cache because you updated the person
+            remove_profile_cache(username)
             return response.json()
         except httpx.HTTPStatusError as exc:
             # Raise an HTTPException with the same status code and error details
@@ -125,6 +133,8 @@ async def update_recruiter(username:str,update_data:RecruiterUpdateRequest,user:
         try:
             response = await client.put(url, json=update_data.model_dump())
             response.raise_for_status()  # Raise an error for HTTP errors
+            #remove from cache
+            remove_profile_cache(username)
             return response.json()
         except httpx.HTTPStatusError as exc:
             # Raise an HTTPException with the same status code and error details
