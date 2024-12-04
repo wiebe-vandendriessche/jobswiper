@@ -1,39 +1,38 @@
 import asyncio
-from matching.swipes import on_message
+from interfaces import IMatchMakingRepository
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-import pika
+from database import Base, engine, MySQL_MatchMakingRepo, SessionLocal
 
 
 app = FastAPI()
+Base.metadata.create_all(bind=engine)
 
 
-app = FastAPI()
+matchmaking_repo: IMatchMakingRepository = MySQL_MatchMakingRepo(
+    sessionmaker=SessionLocal
+)
 
 
-# Pydantic Models
-class UserRecommendation(BaseModel):
-    recommended_jobs: List[str]
-
-
-class JobRecommendation(BaseModel):
-    recommended_users: List[str]
-
-
-# Endpoint for getting recommendations for a user
-@app.get("/recommendations/user/{user_id}", response_model=UserRecommendation)
-async def get_user_recommendations(user_id: str):
-    user = await user_recommendations.find_one({"_id": user_id})
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return UserRecommendation(recommended_jobs=user["recommended_jobs"])
+# --------------------------------------- THESE ENDPOINT CAN BYPASS APPLICATION LAYER AND GO STRAIGHT TO DATABASE AS THE SERVICE WOULD ADD NO VALUE------------------------------------------------------
+@app.get("/recommendations/user/{user_id}")
+async def get_user_recommendations(user_id: int):
+    try:
+        lijst = await matchmaking_repo.find_list_of_recommended_jobs(user_id)
+        return lijst
+    except Exception as e:
+        return HTTPException(501, detail=f"{e}")
 
 
 # Endpoint for getting recommendations for a job
-@app.get("/recommendations/job/{job_id}", response_model=JobRecommendation)
-async def get_job_recommendations(job_id: str):
-    job = await job_recommendations.find_one({"_id": job_id})
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return JobRecommendation(recommended_users=job["recommended_users"])
+@app.get("/recommendations/job/{job_id}")
+async def get_job_recommendations(job_id: int):
+    try:
+        lijst = await matchmaking_repo.find_list_of_recommended_jobs(job_id)
+        return lijst
+    except Exception as e:
+        return HTTPException(501, detail=f"{e}")
+
+
+# -------------------------------------------LIKES/DISLIKES COME IN ASYNCHRONOUS WITH A RABBITMQ BUS --------------------------------------------------------------------------------------
