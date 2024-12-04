@@ -77,10 +77,38 @@ services:
     networks:
       - private-network
 
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"  # Expose MongoDB on localhost:27017
+    environment:
+      MONGO_INITDB_DATABASE: recommendation_db
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongodb_data:/data/db  # Persistent storage for MongoDB
+      - ./init-db:/docker-entrypoint-initdb.d  # Load initialization scrip
+
+  matching:
+    build:
+      context: ./matching
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - mongodb
+    environment:
+      DATABASE_SERVICE: mongodb
+      MONGODB_URI: "mongodb://mongodb:27017/matching_db"
+      THIS_SERVICE: "matching"
+    networks:
+      - private-network
+    
+
 volumes:
   msql_profiles_data:
   msql_auth_data:
-
+  mongodb_data:
 
 networks:
   private-network:
