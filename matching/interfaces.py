@@ -21,3 +21,14 @@ class IMatchMakingRepository(ABC):
     @abstractmethod
     async def save(self, rec: Recommendation) -> None:
         pass
+
+    @abstractmethod
+    async def delete(self, rec: Recommendation) -> None:
+        pass
+
+
+class IMatchPublisher(ABC):
+
+    @abstractmethod
+    async def found_match(self, user_id: Recommendation) -> None:
+        pass

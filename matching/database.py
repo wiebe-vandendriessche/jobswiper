@@ -91,6 +91,18 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
             db.add(new_record)
             db.commit()
 
+    async def delete(self, rec: Recommendation) -> None:
+        with self.get_db() as db:
+            # Query the record to delete based on user_id and job_id
+            record = UserJobMapping(
+                user_id=rec.user_id,
+                job_id=rec.job_id,
+                user_likes=rec.user_likes,
+                recruiter_likes=rec.recruiter_likes,
+            )
+            db.delete(record)  # Delete the found record
+            db.commit()  # Commit the transaction to persist the change
+
     @contextmanager
     def get_db(self):
         db = self.sessionmaker()
