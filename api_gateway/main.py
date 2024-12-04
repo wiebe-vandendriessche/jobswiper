@@ -14,7 +14,7 @@ app = FastAPI()
 # Allow requests from the frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Or ["*"] for all origins
+    allow_origins=["http://localhost:3000","http://localhost:5173"],  # from docker container # from vite dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -171,6 +171,10 @@ If the token is invalid or expired, the user receives a 401 Unauthorized respons
 async def protected_data(user: Annotated[dict, Depends(verify_token_get_user)]):
     # This route is now protected. It can only be accessed by users with a valid token.
     return {"message": f"Hello {user['username']}, you have access!"}
+
+@app.get("/get-user-account")
+async def get_user_account(user: Annotated[dict, Depends(verify_token_get_user)]):
+    return user
 
 
 # -------------------------------------------------Profile Management Service --------------------------------------------------------------------------
