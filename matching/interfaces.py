@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import List, Optional
 
 from domain_model import Recommendation
@@ -32,3 +33,11 @@ class IMatchPublisher(ABC):
     @abstractmethod
     async def found_match(self, user_id: Recommendation) -> None:
         pass
+
+
+@dataclass
+class Swipe:
+    subject: str  # can be "user" or "job"
+    user_id: int
+    job_id: int
+    decision: bool
