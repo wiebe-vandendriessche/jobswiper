@@ -3,3 +3,5 @@ pymongo
 uvicorn
 motor
 pydantic
+aio_pika
+asyncio

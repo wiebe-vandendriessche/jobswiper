@@ -1,12 +1,18 @@
+import asyncio
+from matching.swipes import on_message
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+import aio_pika
+
 
 app = FastAPI()
 
 # MongoDB connection string
 MONGO_DETAILS = "mongodb://root:example@mongodb:27017/recommendation_db"
+RABBITMQ_URL = "amqp://guest:guest@localhost/"
+
 
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client.recommendation_db
@@ -14,6 +20,24 @@ database = client.recommendation_db
 # Collections
 user_recommendations = database.get_collection("user_recommendations")
 job_recommendations = database.get_collection("job_recommendations")
+
+
+async def consume_rabbitmq():
+    """Asynchronous function to consume messages from RabbitMQ queue."""
+    # Connect to RabbitMQ
+    connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    async with connection:
+        channel = await connection.channel()
+
+        # Declare the queue
+        queue = await channel.declare_queue("swipes_queue", durable=True)
+        # Start consuming messages asynchronously
+        await queue.consume(on_message)
+        print("RabbitMQ consumer is running.")
+
+
+# Startup
+asyncio.create_task(consume_rabbitmq())
 
 
 # Pydantic Models
