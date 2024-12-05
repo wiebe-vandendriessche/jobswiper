@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import ProfileUpdate from "./AuthComponents/ProfileUpdate";
 
 const apiBaseUrl = "http://localhost:8080";
 
 function AuthView() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [profileUnCompleted, setProfileUnCompleted] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -23,6 +25,7 @@ function AuthView() {
       if (!response.ok) throw new Error("Failed to fetch user account");
       const data = await response.json();
       setUserData(data);
+
     } catch (err) {
       console.error(err);
     }
@@ -32,6 +35,17 @@ function AuthView() {
     localStorage.removeItem("jwtToken");
     setIsAuthenticated(false);
     setUserData(null);
+    setProfileUnCompleted(false); // Reset profile state on logout
+  };
+
+  const handleSignedUp = () => {
+    setProfileUnCompleted(true); // Show CreateProfileView after sign-up
+  };
+
+  const handleProfileCreated = () => {
+    setProfileUnCompleted(false); // Profile is now complete
+    // After profile creation, log the user in (simulated)
+    handleLogout();
   };
 
   return (
@@ -39,13 +53,23 @@ function AuthView() {
       {isAuthenticated ? (
         <AuthenticatedView userData={userData} onLogout={handleLogout} />
       ) : (
-        <AuthForm setIsAuthenticated={setIsAuthenticated} fetchUserAccount={fetchUserAccount} />
+        profileUnCompleted ? (
+          <CreateProfileView handleProfileCreated={handleProfileCreated} />
+        ) : (
+          <AuthForm
+          setIsAuthenticated={setIsAuthenticated}
+          fetchUserAccount={fetchUserAccount}
+          handleSignedUp={handleSignedUp}
+          setProfileUnCompleted={setProfileUnCompleted}
+        />
+        )
       )}
     </div>
   );
 }
 
-function AuthForm({ setIsAuthenticated, fetchUserAccount }) {
+
+function AuthForm({ setIsAuthenticated, fetchUserAccount, handleSignedUp, setProfileUnCompleted }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
@@ -88,8 +112,9 @@ function AuthForm({ setIsAuthenticated, fetchUserAccount }) {
         fetchUserAccount(token);
         alert("Login successful!");
       } else {
-        alert("Sign-up successful! Please log in.");
-        setIsLogin(true);
+        alert("Sign-up successful! Please create your profile.");
+        handleSignedUp(); // Trigger the profile creation flow
+        setIsLogin(true); // Switch to login after sign-up
       }
     } catch (err) {
       setError(err.message || "Something went wrong");
@@ -130,139 +155,35 @@ function AuthForm({ setIsAuthenticated, fetchUserAccount }) {
   );
 }
 
+
+
+
+
+
 function AuthenticatedView({ userData, onLogout }) {
-  const [profileData, setProfileData] = useState(null);
-  const [profileForm, setProfileForm] = useState({
-    username: "",
-    first_name: "",
-    last_name: "",
-    email: "",
-    location: "",
-    phone_number: "",
-    qualifications: [],
-    salary: { min: 0, max: 300000 },
-    education_level: "",
-    years_of_experience: 0,
-    availability: "",
-    date_of_birth: "",
-    interests: [],
-  });
-
-  useEffect(() => {
-    if (userData?.username) {
-      setProfileForm((prevForm) => ({
-        ...prevForm,
-        username: userData.username, // Update the username field when userData changes
-      }));
-    }
-  }, [userData]);
-
-  const handleProfileInputChange = (e) => {
-    setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
-  };
-
-  const handleProfileSubmit = async (e) => {
-    e.preventDefault();
-
-    const token = localStorage.getItem("jwtToken");
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${apiBaseUrl}/profile/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(profileForm),
-      });
-
-      if (!response.ok) throw new Error("Failed to create/update profile");
-
-      const data = await response.json();
-      setProfileData(data);
-      alert("Profile created/updated successfully!");
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   return (
     <div>
       <h1>Welcome, {userData?.username} (ID: {userData?.id})</h1>
       <button onClick={onLogout}>Logout</button>
-      <ProfileForm
-        profileForm={profileForm}
-        onInputChange={handleProfileInputChange}
-        onSubmit={handleProfileSubmit}
-      />
+      <ProfileUpdate />
     </div>
   );
 }
 
-function ProfileForm({ profileForm, onInputChange, onSubmit }) {
-  const handleDateChange = (e) => {
-    const value = e.target.value;
-    const isValidDate = !isNaN(new Date(value).getTime());
-    onInputChange({
-      target: {
-        name: "date_of_birth",
-        value: isValidDate ? value : null, // Send null if the date is invalid or empty
-      },
-    });
+function CreateProfileView({ handleProfileCreated }) {
+  const handleCreateProfile = () => {
+    // Simulate profile creation (this could be a form submission or similar)
+    alert("Profile created successfully!");
+    handleProfileCreated(); // Notify that the profile is created
   };
 
   return (
-    <form onSubmit={onSubmit}>
-      <input
-        type="text"
-        name="first_name"
-        placeholder="First Name"
-        value={profileForm.first_name}
-        onChange={onInputChange}
-      />
-      <input
-        type="text"
-        name="last_name"
-        placeholder="Last Name"
-        value={profileForm.last_name}
-        onChange={onInputChange}
-      />
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={profileForm.email}
-        onChange={onInputChange}
-      />
-      <input
-        type="text"
-        name="location"
-        placeholder="Location"
-        value={profileForm.location}
-        onChange={onInputChange}
-      />
-      <input
-        type="text"
-        name="phone_number"
-        placeholder="Phone Number"
-        value={profileForm.phone_number}
-        onChange={onInputChange}
-      />
-      <textarea
-        name="qualifications"
-        placeholder="Qualifications"
-        value={profileForm.qualifications}
-        onChange={onInputChange}
-      />
-      <input
-        type="date"
-        name="date_of_birth"
-        placeholder="Date of Birth"
-        value={profileForm.date_of_birth || ""}
-        onChange={handleDateChange}
-      />
-      {/* Add other profile fields as needed */}
-      <button type="submit">Create/Update Profile</button>
-    </form>
+    <div>
+      <h1>Create Profile</h1>
+      <button onClick={handleCreateProfile}>Create Profile</button>
+    </div>
   );
 }
+
 
 export default AuthView;

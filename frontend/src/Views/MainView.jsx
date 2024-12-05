@@ -5,7 +5,6 @@ import SwipeCards from "./../Components/swipecards/SwipeCards";
 function MainView() {
   return (
     <div className="MainView">
-      <Header />
       <SwipeCards />
       <SwipeButton />
     </div>
