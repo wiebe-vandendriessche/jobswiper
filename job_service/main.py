@@ -48,7 +48,8 @@ async def create_job(job_details: IJob):
         responsibilities=job_details.responsibilities,
         requirements=job_details.requirements,
         salary=Salary(job_details.salary.min, job_details.salary.max),
-        application_deadline=job_details.application_deadline,
+        posted_by=job_details.posted_by,
+        posted_by_uuid=job_details.posted_by_uuid
     )
 
     try:
@@ -62,7 +63,7 @@ async def create_job(job_details: IJob):
 
 
 @app.get("/jobs/{job_id}")
-async def get_job(job_id: int):
+async def get_job(job_id: str):
     """
     Get job details by ID.
     - job_id: The ID of the job to fetch.
@@ -84,7 +85,7 @@ async def list_jobs():
 
 
 @app.put("/jobs/{job_id}")
-async def update_job(job_id: int, updates: JobUpdateRequest):
+async def update_job(job_id: str, updates: JobUpdateRequest):
     """
     Update job details.
     - job_id: ID of the job to update.
@@ -98,7 +99,7 @@ async def update_job(job_id: int, updates: JobUpdateRequest):
 
 
 @app.delete("/jobs/{job_id}")
-async def delete_job(job_id: int):
+async def delete_job(job_id: str):
     """
     Delete a job by its ID.
     - job_id: ID of the job to delete.

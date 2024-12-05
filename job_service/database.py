@@ -1,6 +1,7 @@
 from typing import Optional, List
 from unittest.mock import Base
-from sqlalchemy import create_engine, Column, Integer, String, Float, JSON, Date
+import uuid
+from sqlalchemy import UUID, Uuid, create_engine, Column, Integer, String, Float, JSON, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 import os
@@ -9,24 +10,31 @@ import os
 from domain_model import Job, Salary
 from interfaces import IJobRepository
 
+DATABASE_URL = f"mysql+mysqlconnector://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@{os.getenv('DATABASE_SERVICE')}:{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DB')}"
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
 
 
 class JobModel(Base):
     __tablename__ = "jobs"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     title = Column(String(255), nullable=False)
     description = Column(String(1000), nullable=False)
     location = Column(String(255), nullable=False)
     job_type = Column(String(100), nullable=False)
     salary_min = Column(Float, nullable=False, default=0)
     salary_max = Column(Float, nullable=False, default=300000)
-    qualifications = Column(JSON, nullable=True, default=[])
     company_name = Column(String(255), nullable=False)
     posted_by = Column(String(50), nullable=False)
-    posted_by_uuid = Column(Integer, nullable=False) # UUID of recruiter -> secondary key
+    posted_by_uuid = Column(String(36), nullable=False)  # UUID of recruiter -> secondary key
     posted_date = Column(Date, nullable=False)
-    application_deadline = Column(Date, nullable=True)
+    responsibilities = Column(String(1000), nullable=True)  # Comma-separated list of responsibilities
+    requirements = Column(String(1000), nullable=True)  # Comma-separated list of requirements
 
 
 class JobRepository:
@@ -40,32 +48,35 @@ class JobRepository:
             return Job(
                 id=job.id,
                 title=job.title,
-                description=job.description,
+                company_name=job.company_name,
                 location=job.location,
                 job_type=job.job_type,
+                description=job.description,
+                responsibilities=job.responsibilities,
+                requirements=job.requirements,
                 salary=Salary(job.salary_min, job.salary_max),
-                qualifications=job.qualifications,
-                company_name=job.company_name,
                 posted_by=job.posted_by,
-                posted_date=job.posted_date,
-                application_deadline=job.application_deadline,
+                posted_by_uuid=job.posted_by_uuid,
+                posted_date=job.posted_date
             )
         return None
 
     async def save(self, job: Job):
         db = next(self.get_db())
         db_job = JobModel(
+            id=job.id,
             title=job.title,
-            description=job.description,
+            company_name=job.company_name,
             location=job.location,
             job_type=job.job_type,
+            description=job.description,
+            responsibilities=job.responsibilities,
+            requirements=job.requirements,
             salary_min=job.salary.min,
             salary_max=job.salary.max,
-            qualifications=job.qualifications,
-            company_name=job.company_name,
             posted_by=job.posted_by,
-            posted_date=job.posted_date,
-            application_deadline=job.application_deadline,
+            posted_by_uuid=job.posted_by_uuid,
+            posted_date=job.posted_date
         )
         if job.id:  # For updating an existing job
             db_job.id = job.id
@@ -83,15 +94,16 @@ class JobRepository:
             Job(
                 id=job.id,
                 title=job.title,
-                description=job.description,
+                company_name=job.company_name,
                 location=job.location,
                 job_type=job.job_type,
+                description=job.description,
+                responsibilities=job.responsibilities,
+                requirements=job.requirements,
                 salary=Salary(job.salary_min, job.salary_max),
-                qualifications=job.qualifications,
-                company_name=job.company_name,
                 posted_by=job.posted_by,
+                posted_by_uuid=job.posted_by_uuid,
                 posted_date=job.posted_date,
-                application_deadline=job.application_deadline,
             )
             for job in jobs
         ]

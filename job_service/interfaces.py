@@ -12,7 +12,7 @@ class IJobRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_id(self, job_id: int) -> Optional[Job]:
+    async def find_by_id(self, job_id: str) -> Optional[Job]:
         """Retrieve a job by its unique identifier."""
         pass
 
@@ -25,7 +25,7 @@ class IJobRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_by_id(self, job_id: int):
+    async def delete_by_id(self, job_id: str):
         """Delete a job from the repository by its unique identifier."""
         pass
 
@@ -44,6 +44,6 @@ class IChangedJobPublisher(ABC):
         pass
 
     @abstractmethod
-    async def job_deleted(self, job_id: int):
+    async def job_deleted(self, job_id: str):
         """Notify subscribers about a job deletion."""
         pass

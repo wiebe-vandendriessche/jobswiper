@@ -1,6 +1,8 @@
 from typing import List, Optional
 from datetime import date
 
+from sqlalchemy import Uuid
+
 
 
 class Salary:
@@ -38,11 +40,12 @@ class Job:
         location: str,
         job_type: str,  # e.g., 'Full-time', 'Part-time', 'Contract'
         description: str,
-        responsibilities: List[str],
-        requirements: List[str],
+        responsibilities: str,
+        requirements: str,
         salary: Salary = Salary(),
-        date_posted: Optional[date] = None,
-        application_deadline: Optional[date] = None,
+        posted_by= str,
+        posted_by_uuid= str,
+        posted_date: Optional[date] = None,
         id: Optional[int] = None,
     ):
         self.title = title  # Job title
@@ -53,8 +56,9 @@ class Job:
         self.responsibilities = responsibilities  # List of job responsibilities
         self.requirements = requirements  # List of job requirements
         self.salary = salary  # Default salary range
-        self.date_posted = date_posted if date_posted else date.today()  # Date job was posted
-        self.application_deadline = application_deadline  # Deadline for applications
+        self.posted_by= posted_by
+        self.posted_by_uuid= posted_by_uuid
+        self.posted_date = posted_date if posted_date else date.today()  # Date job was posted
         self.id = id  # Unique identifier for the job (optional)
 
     def update_job_details(
@@ -74,11 +78,11 @@ class Job:
         if description:
             self.description = description
 
-    def update_responsibilities(self, responsibilities: List[str]):
+    def update_responsibilities(self, responsibilities: str):
         """Update the list of responsibilities."""
         self.responsibilities = responsibilities
 
-    def update_requirements(self, requirements: List[str]):
+    def update_requirements(self, requirements: str):
         """Update the list of requirements."""
         self.requirements = requirements
 
@@ -87,22 +91,12 @@ class Job:
         Update the salary range.
         This assumes validation is handled by the Salary microservice.
         """
-        if min is not None:
-            self.salary["min"] = min
-        if max is not None:
-            self.salary["max"] = max
-
-    def extend_deadline(self, new_deadline: date):
-        """Extend or set the application deadline."""
-        if new_deadline < self.date_posted:
-            raise ValueError("Application deadline cannot be earlier than the posting date.")
-        self.application_deadline = new_deadline
+        self.salary.update_salary_range(min,max)
 
     def __repr__(self):
         return (
             f"Job(title='{self.title}', company_name='{self.company_name}', location='{self.location}', "
-            f"job_type='{self.job_type}', salary={self.salary}, date_posted='{self.date_posted}', "
-            f"application_deadline='{self.application_deadline}')"
+            f"job_type='{self.job_type}', salary={self.salary}, posted_date='{self.posted_date}', "
         )
 
 

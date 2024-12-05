@@ -178,3 +178,9 @@ async def protected_data(user: Annotated[dict, Depends(verify_token_get_user)]):
 from profiles import Profile_router
 
 app.include_router(Profile_router)
+
+# ------------------------------------------------- Job Management Service -----------------------------------------------------------------------------
+
+from jobs import Jobs_router
+
+app.include_router(Jobs_router)

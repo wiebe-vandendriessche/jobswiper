@@ -17,7 +17,7 @@ class JobManagementService:
         await self.job_repo.save(job)
         return job
 
-    async def update_job(self, job_id: int, update: JobUpdateRequest):
+    async def update_job(self, job_id: str, update: JobUpdateRequest):
         job = await self.job_repo.find_by_id(job_id)
         if not job:
             raise ValueError(f"Job with ID {job_id} does not exist.")
@@ -36,26 +36,24 @@ class JobManagementService:
             job.update_requirements(update.requirements)
         if update.salary:
             job.update_salary(update.salary.min, update.salary.max)
-        if update.application_deadline:
-            job.extend_deadline(update.application_deadline)
         
         await self.job_repo.save(job)
 
-    async def get_job(self, job_id: int) -> Job:
+    async def get_job(self, job_id: str) -> Job:
         job = await self.job_repo.find_by_id(job_id)
         if not job:
             raise ValueError(f"Job with ID {job_id} does not exist.")
         return job
 
     async def list_jobs(self) -> List[Job]:
-        jobs = await self.job_repo.list_all()
+        jobs = await self.job_repo.find_all()
         return jobs
 
     async def delete_job(self, job_id: int):
         job = await self.job_repo.find_by_id(job_id)
         if not job:
             raise ValueError(f"Job with ID {job_id} does not exist.")
-        await self.job_repo.delete(job_id)
+        await self.job_repo.delete_by_id(job_id)
 
     async def check_existing(self, job_id: Optional[int]) -> bool:
         if job_id is None:
