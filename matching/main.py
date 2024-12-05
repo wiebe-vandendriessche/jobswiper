@@ -1,11 +1,15 @@
 import asyncio
 import json
+import os
+
+import aio_pika
 from interfaces import IMatchMakingRepository, Swipe
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, cast
 from database import Base, engine, MySQL_MatchMakingRepo, SessionLocal
 from application_layer import MatchMakingService
+from rabbit import PikaConsumer
 
 
 app = FastAPI()
@@ -19,9 +23,23 @@ matchmaking_repo: IMatchMakingRepository = MySQL_MatchMakingRepo(
 matchmaking_service = MatchMakingService(matchmaking_repo)
 
 
+# ------------------------------------------SETUP CONSUMER ASYNCHRONOUSLY--------------------
+@app.on_event("startup")
+async def startup():
+    loop = asyncio.get_running_loop()
+    consumer = PikaConsumer(
+        host=os.getenv("BUS_SERVICE"),
+        port=int(os.getenv("BUS_PORT", 5672)),
+        queue_name=os.getenv("SWIPES_BUS"),
+        consumer_function=process_incoming_message,
+    )
+    task = loop.create_task(consumer.consume(loop))
+    await task
+
+
 # --------------------------------------- THESE ENDPOINT CAN BYPASS APPLICATION LAYER AND GO STRAIGHT TO DATABASE AS THE SERVICE WOULD ADD NO VALUE------------------------------------------------------
 @app.get("/recommendations/user/{user_id}")
-async def get_user_recommendations(user_id: int):
+async def get_user_recommendations(user_id: str):
     try:
         lijst = await matchmaking_repo.find_list_of_recommended_jobs(user_id)
         return lijst
@@ -31,7 +49,7 @@ async def get_user_recommendations(user_id: int):
 
 # Endpoint for getting recommendations for a job
 @app.get("/recommendations/job/{job_id}")
-async def get_job_recommendations(job_id: int):
+async def get_job_recommendations(job_id: str):
     try:
         lijst = await matchmaking_repo.find_list_of_recommended_jobs(job_id)
         return lijst
@@ -42,7 +60,7 @@ async def get_job_recommendations(job_id: int):
 # -------------------------------------------LIKES/DISLIKES COME IN ASYNCHRONOUS WITH A RABBITMQ BUS --------------------------------------------------------------------------------------
 
 
-async def process_incoming_message(self, message):
+async def process_incoming_message(message: aio_pika.IncomingMessage):
 
     body = message.body
     if body:
@@ -59,14 +77,14 @@ async def process_incoming_message(self, message):
                 )
 
         except json.JSONDecodeError as e:
-            message.ack()  # bad message
+            await message.ack()  # bad message
             print(f"Failed to decode JSON: {e}")
         except TypeError as e:
-            message.ack()  # bad message
+            await message.ack()  # bad message
             print(f"Error creating Swipe object: {e}")
         except (
             Exception
         ) as e:  # database exception --> the entity is not processed, procces again so dont ack
             print(f"other error, not acking: {e}")
 
-    message.ack()
+    await message.ack()

@@ -4,8 +4,8 @@ from typing import Optional
 class Recommendation:
     def __init__(
         self,
-        user_id: int,
-        job_id: int,
+        user_id: str,
+        job_id: str,
         user_likes: Optional[bool] = None,
         recruiter_likes: Optional[bool] = None,
     ) -> None:

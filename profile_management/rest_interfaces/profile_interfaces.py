@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid
 from pydantic import BaseModel
 
 
@@ -8,6 +9,7 @@ class ISalary(BaseModel):
 
 
 class IUserProfile(BaseModel):
+    id: Optional[str] = None
     username: str
     first_name: str
     last_name: str

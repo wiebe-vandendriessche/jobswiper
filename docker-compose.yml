@@ -44,6 +44,7 @@ services:
     environment:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
+      MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
       THIS_SERVICE: "api_gateway"
     networks:
       - private-network
@@ -77,18 +78,18 @@ services:
     networks:
       - private-network
 
-  mongodb:
-    image: mongo:5.0
-    container_name: mongodb
-    ports:
-      - "27017:27017"  # Expose MongoDB on localhost:27017
+  mysql_matching:
+    image: mysql:8.0
     environment:
-      MONGO_INITDB_DATABASE: recommendation_db
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: matching_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    networks:
+      - private-network
     volumes:
-      - mongodb_data:/data/db  # Persistent storage for MongoDB
-      - ./init-db:/docker-entrypoint-initdb.d  # Load initialization scrip
+      - msql_matching_data:/var/lib/mysql # This ensures data persists
+      - ./init-db:/docker-entrypoint-initdb.d
 
   matching:
     build:
@@ -96,19 +97,37 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      - mongodb
+      - mysql_matching
+    ports:
+      - "4200:8000" # Expose API Gateway port
     environment:
-      DATABASE_SERVICE: mongodb
-      MONGODB_URI: "mongodb://mongodb:27017/matching_db"
-      THIS_SERVICE: "matching"
+      DATABASE_SERVICE: mysql_matching
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DB: matching_db
+      MYSQL_PORT: 3306
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      SWIPES_BUS: swipes
     networks:
       - private-network
-    
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5000:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - private-network
 
 volumes:
   msql_profiles_data:
   msql_auth_data:
-  mongodb_data:
+  msql_matching_data:
+
 
 networks:
   private-network:

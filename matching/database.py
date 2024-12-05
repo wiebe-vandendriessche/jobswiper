@@ -23,9 +23,9 @@ Base = declarative_base()
 class UserJobMapping(Base):
     __tablename__ = "user_job_mapping"
 
-    user_id = Column(Integer, nullable=False, Index=True, primary_key=True)
+    user_id = Column(String(36), nullable=False, index=True, primary_key=True)
     job_id = Column(
-        Integer, nullable=False, Index=True, primary_key=True
+        String(36), nullable=False, index=True, primary_key=True
     )  # because they are combined primary key they are index in a combined way, making them easy to uery as a pair
     user_likes = Column(
         Boolean, nullable=True
@@ -39,30 +39,33 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
     def __init__(self, sessionmaker: sessionmaker):
         self.sessionmaker = sessionmaker
 
-    async def find_list_of_recommended_jobs(self, user_id: int) -> List[int]:
+    async def find_list_of_recommended_jobs(self, user_id: str) -> List[int]:
         # Using `get_db` to get a session, query all jobs where the user is recommended
         with self.get_db() as db:
             jobs = (
-                db.query(UserJobMapping.job_id)
-                .filter(UserJobMapping.user_id == user_id)
+                db.query(UserJobMapping)
+                .filter(
+                    UserJobMapping.user_id == user_id,
+                    UserJobMapping.recruiter_likes == None,  # unrecommended for job
+                )
                 .all()
             )
             return [job.job_id for job in jobs]
 
-    async def find_list_of_recommended_users(self, job_id: int) -> List[int]:
+    async def find_list_of_recommended_users(self, job_id: str) -> List[int]:
         # Using `get_db` to get a session, query all users where the job is recommended
         with self.get_db() as db:
             users = (
-                db.query(UserJobMapping.user_id)
+                db.query(UserJobMapping)
                 .filter(
                     UserJobMapping.job_id == job_id,
-                    UserJobMapping.recruiter_likes == True,
+                    UserJobMapping.user_likes == None,  # unrecommended for user
                 )
                 .all()
             )
             return [user.user_id for user in users]
 
-    async def query(self, user_id: int, job_id: int) -> Optional[Recommendation]:
+    async def query(self, user_id: str, job_id: str) -> Optional[Recommendation]:
         # Using `get_db` to get a session, query for a specific user-job recommendation
         with self.get_db() as db:
             result = (

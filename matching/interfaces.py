@@ -8,15 +8,15 @@ from domain_model import Recommendation
 class IMatchMakingRepository(ABC):
 
     @abstractmethod
-    async def find_list_of_recommended_jobs(self, user_id: int) -> List[int]:
+    async def find_list_of_recommended_jobs(self, user_id: str) -> List[str]:
         pass
 
     @abstractmethod
-    async def find_list_of_recommended_users(self, job_id: int) -> List[int]:
+    async def find_list_of_recommended_users(self, job_id: str) -> List[str]:
         pass
 
     @abstractmethod
-    async def query(self, user_id: int, job_id: int) -> Optional[Recommendation]:
+    async def query(self, user_id: str, job_id: str) -> Optional[Recommendation]:
         pass
 
     @abstractmethod

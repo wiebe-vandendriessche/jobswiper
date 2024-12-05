@@ -1,3 +1,5 @@
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 from typing import Optional
 from sqlalchemy import Date, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,8 +23,9 @@ Base = declarative_base()
 
 class JobSeekerModel(Base):
     __tablename__ = "job_seekers"
-
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
+    )
     username = Column(String(255), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -63,6 +66,7 @@ class JobSeekerRepository(IJobSeekerRepository):
         )
         if job_seeker:
             return JobSeeker(
+                id=job_seeker.id,
                 username=job_seeker.username,
                 first_name=job_seeker.first_name,
                 last_name=job_seeker.last_name,
@@ -76,7 +80,6 @@ class JobSeekerRepository(IJobSeekerRepository):
                 interests=job_seeker.interests,
                 qualifications=job_seeker.qualifications,
                 date_of_birth=job_seeker.date_of_birth,
-                id=job_seeker.id,
             )
         return None
 
