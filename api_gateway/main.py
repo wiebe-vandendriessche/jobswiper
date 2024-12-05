@@ -179,3 +179,6 @@ from profiles import Profile_router
 
 app.include_router(Profile_router)
 # --------------------------------------------------Matchmaking Service ----------------------------------------------------------------------------------------
+from matching import Matches_router
+
+app.include_router(Matches_router)

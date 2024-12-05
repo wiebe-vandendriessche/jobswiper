@@ -98,8 +98,6 @@ services:
     restart: always
     depends_on:
       - mysql_matching
-    ports:
-      - "4200:8000" # Expose API Gateway port
     environment:
       DATABASE_SERVICE: mysql_matching
       MYSQL_USER: user
