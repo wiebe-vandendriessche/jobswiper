@@ -41,11 +41,15 @@ services:
     restart: always
     depends_on:
       - jwt_auth # API Gateway depends on authentication service
+      - rabbitmq
     environment:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
       MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
       THIS_SERVICE: "api_gateway"
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      SWIPES_BUS: swipes
     networks:
       - private-network
 
@@ -118,6 +122,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq # Persistent storage for RabbitMQ data
     networks:
       - private-network
 
@@ -125,6 +131,7 @@ volumes:
   msql_profiles_data:
   msql_auth_data:
   msql_matching_data:
+  rabbitmq_data:
 
 
 networks:

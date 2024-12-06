@@ -24,6 +24,7 @@ from rest_interfaces.profile_interfaces import (
 
 from domain_model import JobSeeker, Recruiter, Salary, UserProfile
 
+
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 

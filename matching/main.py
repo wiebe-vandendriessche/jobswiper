@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 
 import aio_pika
@@ -11,6 +12,8 @@ from database import Base, engine, MySQL_MatchMakingRepo, SessionLocal
 from application_layer import MatchMakingService
 from rabbit import PikaConsumer
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
@@ -63,10 +66,11 @@ async def get_job_recommendations(job_id: str):
 async def process_incoming_message(message: aio_pika.IncomingMessage):
 
     body = message.body
-    if body:
-        try:
-            swipe = cast(Swipe, json.loads(body))
-
+    try:
+        if body:
+            data = json.loads(body)
+            swipe = Swipe(**data)
+            logger.info(f"MESSAGE RECIEVED:{swipe}")
             if swipe.subject == "user":
                 await matchmaking_service.swiped_on_job(
                     swipe.user_id, swipe.job_id, swipe.decision
@@ -75,16 +79,19 @@ async def process_incoming_message(message: aio_pika.IncomingMessage):
                 await matchmaking_service.swiped_on_user(
                     swipe.user_id, swipe.job_id, swipe.decision
                 )
+        await message.ack()
 
-        except json.JSONDecodeError as e:
-            await message.ack()  # bad message
-            print(f"Failed to decode JSON: {e}")
-        except TypeError as e:
-            await message.ack()  # bad message
-            print(f"Error creating Swipe object: {e}")
-        except (
-            Exception
-        ) as e:  # database exception --> the entity is not processed, procces again so dont ack
-            print(f"other error, not acking: {e}")
+    except json.JSONDecodeError as e:
+        await message.ack()  # bad message
+        logger.warning(f"Failed to decode JSON: {e}")
+    except TypeError as e:
+        await message.ack()  # bad message
+        logger.warning(f"Error creating Swipe object: {e}")
+    except NameError as e:
+        await message.ack()  # bad message
+        logger.warning(f"404:{e}")
 
-    await message.ack()
+    except (
+        Exception
+    ) as e:  # database exception --> the entity is not processed, procces again so dont ack
+        logger.warning(f"other error, not acking: {e}")

@@ -2,7 +2,10 @@ import os
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
+from dataclasses import asdict
 
+from rest_interfaces.matching_interfaces import ISwipe, Swipe
+from rabbit import PikaPublisher
 from main import verify_token_get_user
 
 
@@ -11,7 +14,7 @@ Matches_router = APIRouter(prefix="/matches", tags=["matches"])
 MATCHING_SERVICE_URL = os.getenv("MATCHING_MANAGEMENT_SERVICE_URL")
 
 
-@Matches_router.get("/recommendations/{user_id}")
+@Matches_router.get("/recommendations/user/{user_id}")
 async def user_recommendations(
     user_id: str, user: Annotated[dict, Depends(verify_token_get_user)]
 ):
@@ -62,3 +65,62 @@ async def job_recommendations(
 
 
 # --------------------------------------Publisher endpoint----------------------------------------------------------------
+# initialize client on startup
+publisher = PikaPublisher(
+    os.getenv("BUS_SERVICE"), int(os.getenv("BUS_PORT", 5672)), os.getenv("SWIPES_BUS")
+)
+
+
+@Matches_router.on_event("startup")
+async def start_publisher():
+    await publisher.initialize()
+
+
+@Matches_router.post("/swipe/user")
+async def user_swipe(
+    swipe: ISwipe, user: Annotated[dict, Depends(verify_token_get_user)]
+):
+    """
+    Swipe right or left on a job listing, based on the boolean in decision
+
+    """
+    # -----not done yet: check if userid matches swipe userid-----
+    try:
+        newswipe = Swipe(
+            subject="user",
+            user_id=swipe.user_id,
+            job_id=swipe.job_id,
+            decision=swipe.decision,
+        )
+        await publisher.send_message(asdict(newswipe))
+        return {
+            "message": "Your swipe is being processed : Put on bus"
+        }  # Return the data if the response is successful
+    except Exception as e:
+        # Catch other unforeseen errors and propagate as 500 error
+        raise HTTPException(status_code=501, detail=f"Unexpected error: {e}")
+
+
+@Matches_router.post("/swipe/job")
+async def job_swipe(
+    swipe: ISwipe, user: Annotated[dict, Depends(verify_token_get_user)]
+):
+    """
+    Swipe right or left on a job listing, based on the boolean in decision
+
+    """
+    # -----not done yet: check if userid matches swipe userid-----
+    try:
+        newswipe = Swipe(
+            subject="job",
+            user_id=swipe.user_id,
+            job_id=swipe.job_id,
+            decision=swipe.decision,
+        )
+        await publisher.send_message(asdict(newswipe))
+        return {
+            "message": "Your swipe is being processed : Put on bus"
+        }  # Return the data if the response is successful
+    except Exception as e:
+        # Catch other unforeseen errors and propagate as 500 error
+        raise HTTPException(status_code=501, detail=f"Unexpected error: {e}")

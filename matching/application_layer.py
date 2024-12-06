@@ -22,12 +22,16 @@ class MatchMakingService:
         if recom:  # else do nothing-> no error because you are consuming from bus
             recom.swipe_on_job(decision)
             await self.changed_recommendation(recom)
+        else:
+            raise NameError("Recommendation doesnt exist")
 
-    async def swiped_on_user(self, user_id: int, job_id: int, decision: bool):
+    async def swiped_on_user(self, user_id: str, job_id: str, decision: bool):
         recom: Optional[Recommendation] = await self.repo.query(user_id, job_id)
         if recom:  # else do nothing-> no error because you are consuming from bus
             recom.swipe_on_user(decision)
             await self.changed_recommendation(recom)
+        else:
+            raise NameError("Recommendation doesnt exist")
 
     async def changed_recommendation(self, recom: Recommendation):
         if (

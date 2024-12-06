@@ -1,6 +1,7 @@
 fastapi
 httpx
 redis
+aio_pika
 uvicorn
 pydantic
 python-multipart

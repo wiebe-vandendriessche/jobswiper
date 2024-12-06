@@ -38,6 +38,6 @@ class IMatchPublisher(ABC):
 @dataclass
 class Swipe:
     subject: str  # can be "user" or "job"
-    user_id: int
-    job_id: int
+    user_id: str
+    job_id: str
     decision: bool
