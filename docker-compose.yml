@@ -59,10 +59,12 @@ services:
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
       MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
       JOB_MANAGEMENT_SERVICE_URL: "http://job_management_service:8000"
+      PAYMENT_SERVICE_URL: "http://payment_service:8000"
       THIS_SERVICE: "api_gateway"
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
       SWIPES_BUS: swipes
+      JOBS_BUS: job_update
     networks:
       - private-network
 
@@ -166,6 +168,14 @@ services:
       MYSQL_PASSWORD: user_password
       MYSQL_DB: jobs_db
       MYSQL_PORT: 3306
+    networks:
+      - private-network
+  
+  payment_service:
+    build:
+      context: ./payment_service
+      dockerfile: Dockerfile
+    restart: always
     networks:
       - private-network
 
