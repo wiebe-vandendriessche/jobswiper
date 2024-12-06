@@ -68,6 +68,7 @@ async def create_account(details: Union[IJobSeeker, IRecruiter]):
             Salary(job_seeker.salary.min, job_seeker.salary.max),
             job_seeker.date_of_birth,
             job_seeker.phone_number,
+            job_seeker.id,
         )
 
         try:
@@ -84,6 +85,7 @@ async def create_account(details: Union[IJobSeeker, IRecruiter]):
             recruiter.location,
             recruiter.company_name,
             recruiter.phone_number,
+            recruiter.id,
         )
         try:
             await service.register_recruiter(recruiter)

@@ -1,10 +1,13 @@
+import uuid
 from database import Base
 from sqlalchemy import Column, Integer, String
 
 
 class Users(Base):
     __tablename__ = "users"
-    id = Column(String(36), primary_key=True, index=True)
+    id = Column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
+    )
     username = Column(
         String(255), unique=True, index=True
     )  # Added length to String + Indexing

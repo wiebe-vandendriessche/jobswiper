@@ -39,7 +39,7 @@ class UserProfile:
         email: str,
         location: str,
         phone_number: Optional[str] = None,
-        id: Optional[int] = None,
+        id: Optional[str] = None,
     ):
         self.username = username
         self.first_name = first_name  # First name of the user
@@ -136,7 +136,7 @@ class Recruiter(UserProfile):
         location: str,
         company_name: str,
         phone_number: Optional[str] = None,
-        id: Optional[int] = None,
+        id: Optional[str] = None,
     ):
         # Initialize parent class with common attributes
         super().__init__(

@@ -143,6 +143,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    restart: always
     ports:
       - "5000:15672" # Management UI
     environment:
