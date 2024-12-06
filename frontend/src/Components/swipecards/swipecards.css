@@ -35,3 +35,12 @@
     text-align: center;
     margin-top: 10px;
 }
+
+.infoText {
+    position: fixed;
+    bottom: 2vh;
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    color: #333;
+}
