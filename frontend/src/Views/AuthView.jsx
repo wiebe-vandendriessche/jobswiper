@@ -48,7 +48,7 @@ function AuthView() {
   return (
     <div className="authView">
       {isAuthenticated ? (
-        <AuthenticatedView userData={userData} onLogout={handleLogout} />
+        <AuthenticatedView userData={userData} onLogout={handleLogout}/>
       ) : (
         <AuthForm
           setIsAuthenticated={setIsAuthenticated}

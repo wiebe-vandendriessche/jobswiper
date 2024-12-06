@@ -47,7 +47,9 @@ class JobSeekerModel(Base):
 class RecruiterModel(Base):
     __tablename__ = "recruiters"
 
-    id = Column(String(36), primary_key=True, index=True)
+    id = Column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
+    )    
     username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -72,7 +74,6 @@ class JobSeekerRepository(IJobSeekerRepository):
             if job_seeker:
                 return JobSeeker(
                     id=job_seeker.id,
-
                     username=job_seeker.username,
                     first_name=job_seeker.first_name,
                     last_name=job_seeker.last_name,

@@ -7,7 +7,7 @@ import { Button } from '@mui/material';
 
 import "./header.css";
 
-function Header(props) {
+function Header() {
   const navigate = useNavigate();
 
   const handlePersonClick = () => {
@@ -17,6 +17,7 @@ function Header(props) {
   const handleHomeClick = () => {
     navigate("/"); // Navigate to the home route
   }
+
 
   return (
     <div className="header">
