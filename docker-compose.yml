@@ -4,7 +4,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80" # Serve production build on localhost:3000 because 8080 is used by the API Gateway and normally 5173 is used for vite local dev server
+      - "3000:80" # Serve production build on localhost:3000
     restart: always
     depends_on:
       - api_gateway
@@ -20,8 +20,6 @@ services:
       MYSQL_DATABASE: auth_db
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
-    ports:
-      - 3306:3306
     networks:
       - private-network
     volumes:
@@ -71,8 +69,6 @@ services:
       MYSQL_PASSWORD: user_password
     networks:
       - private-network
-    ports:
-      - 3307:3306
     volumes:
       - msql_profiles_data:/var/lib/mysql # This ensures data persists
       - ./init-db:/docker-entrypoint-initdb.d

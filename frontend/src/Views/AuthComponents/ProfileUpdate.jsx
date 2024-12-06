@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 
+//const apiBaseUrl = "http://api_gateway:8080";
+const apiBaseUrl = "http://localhost:8080";
+//const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+
 const ProfileUpdate = ({ profile, username, fetchProfile, onLogout }) => {
     const [formData, setFormData] = useState({});
     const [isRecruiter, setIsRecruiter] = useState(false);
@@ -31,8 +35,8 @@ const ProfileUpdate = ({ profile, username, fetchProfile, onLogout }) => {
         try {
             const token = localStorage.getItem('jwtToken');
             const endpoint = isRecruiter
-                ? `http://localhost:8080/profile/recruiter/${username}`
-                : `http://localhost:8080/profile/jobseeker/${username}`;
+                ? `${apiBaseUrl}/profile/recruiter/${username}`
+                : `${apiBaseUrl}/profile/jobseeker/${username}`;
 
             const response = await fetch(endpoint, {
                 method: "PUT",

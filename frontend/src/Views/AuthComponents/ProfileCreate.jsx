@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 
+const apiBaseUrl = "http://localhost:8080";
+//const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+//const apiBaseUrl = "http://api_gateway:8080";
+
 const ProfileCreate = ({ username, setProfile, onLogout }) => {
     const [isRecruiter, setIsRecruiter] = useState(false);
     const [formData, setFormData] = useState({
@@ -58,7 +62,7 @@ const ProfileCreate = ({ username, setProfile, onLogout }) => {
 
         try {
             const token = localStorage.getItem('jwtToken');
-            const response = await fetch("http://localhost:8080/profile/", {
+            const response = await fetch(`${apiBaseUrl}/profile/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
