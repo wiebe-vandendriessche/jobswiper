@@ -14,12 +14,11 @@ class ProfileManagementService:
         self,
         job_seeker_repo: IJobSeekerRepository,
         recruiter_repo: IRecruiterRepository,
-        # publisher: IChangedJobSeekerPublisher,
+        publisher: IChangedJobSeekerPublisher,
     ):
         self.job_seeker_repo = job_seeker_repo
         self.recruiter_repo = recruiter_repo
-
-    # self.publisher = publisher
+        self.publisher = publisher
 
     async def register_job_seeker(self, job_seeker: JobSeeker):
         exists = await self.check_existing(job_seeker.username)
@@ -27,7 +26,7 @@ class ProfileManagementService:
             raise NameError(f"Username already has a coupled profile")
 
         await self.job_seeker_repo.save(job_seeker)
-        # await self.publisher.createdProfile(job_seeker)
+        await self.publisher.createdProfile(job_seeker)
         return job_seeker
 
     async def update_job_seeker(self, username: str, update: JobSeekerUpdateRequest):
@@ -48,7 +47,7 @@ class ProfileManagementService:
             if update.qualifications:
                 job_seeker.update_qualifications(update.qualifications)
             await self.job_seeker_repo.save(job_seeker)
-            # await self.publisher.updatedProfile(job_seeker)
+            await self.publisher.updatedProfile(job_seeker)
             return
         raise NameError(f"User with username {username} does not exist.")
 
@@ -83,6 +82,4 @@ class ProfileManagementService:
         account_js = await self.job_seeker_repo.find_by_username(username)
         account_r = await self.recruiter_repo.find_by_username(username)
         # If either returns a non-None object, the username exists
-        print(account_js)
-        print(account_r)
         return account_js is not None or account_r is not None

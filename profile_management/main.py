@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from typing import Annotated, Any, Dict, List, Optional, Union, cast
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +14,7 @@ from database import (
     Base,
     engine,
 )
+from publisher import ChangedJobSeekerPublisher
 from rest_interfaces.profile_interfaces import (
     IJobSeeker,
     IRecruiter,
@@ -27,10 +29,22 @@ from domain_model import JobSeeker, Recruiter, Salary, UserProfile
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
+# set up publisher for jobseeker events --> to recommendation service
+# initialize client on startup
+publisher = ChangedJobSeekerPublisher(
+    os.getenv("BUS_SERVICE"),
+    int(os.getenv("BUS_PORT", 5672)),
+    os.getenv("JOBSEEKER_BUS"),
+)
+
+
+@app.on_event("startup")
+async def start_publisher():
+    await publisher.initialize()
 
 
 service: ProfileManagementService = ProfileManagementService(
-    JobSeekerRepository(SessionLocal), RecruiterRepository(SessionLocal)
+    JobSeekerRepository(SessionLocal), RecruiterRepository(SessionLocal), publisher
 )
 
 
