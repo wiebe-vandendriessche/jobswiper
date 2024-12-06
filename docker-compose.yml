@@ -95,7 +95,6 @@ services:
     networks:
       - private-network
 
-
   mysql_matching:
     image: mysql:8.0
     environment:
@@ -151,7 +150,8 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq # Persistent storage for RabbitMQ data
-
+    networks:
+      - private-network
 
   job_management_service:
     build:
@@ -175,6 +175,7 @@ volumes:
   msql_matching_data:
   rabbitmq_data:
   msql_jobs_data:
+
 
 networks:
   private-network:
