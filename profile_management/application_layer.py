@@ -83,3 +83,7 @@ class ProfileManagementService:
         account_r = await self.recruiter_repo.find_by_username(username)
         # If either returns a non-None object, the username exists
         return account_js is not None or account_r is not None
+    
+    async def check_existing_uuid(self, uuid: str):
+        account = await self.recruiter_repo.find_by_uuid(uuid)
+        return account is not None

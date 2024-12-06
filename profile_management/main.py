@@ -150,3 +150,14 @@ async def update_recruiter(
         return {"message": "Recruiter profile updated successfully"}
     except NameError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@app.get("/recruiter/{uuid}/credentials")
+async def check_credentials(uuid: str):
+    try:
+        await service.check_existing_uuid(uuid)
+        return JSONResponse(
+            content={"message": "Credentials are valid"},
+            status_code=200
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))

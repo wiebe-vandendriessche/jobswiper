@@ -32,17 +32,17 @@ QUEUE_NAME = "job_update"
 # 4a. Publish new job to rabbitmq queue with name="job_update"
 # 4b. DELETE to job_service to delete job from database
 
-# ============== Hier zou nog een extra endpoint voorzien moeten worden in PMS
-# async def check_recruiter_credentials(user_id: str):
-#     url = f"{PROFILE_MANAGEMENT_URL}/recruiter/{user_id}/credentials"
-#     async with httpx.AsyncClient() as client:
-#         response = await client.get(url)
-#         if response.status_code != 200:
-#             raise HTTPException(
-#                 status_code=response.status_code,
-#                 detail=f"Recruiter credentials verification failed: {response.text}",
-#             )
-#         return response.json()
+# ============== Check in PMS -> check_existing
+async def check_recruiter_credentials(user_id: str):
+    url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/recruiter/{user_id}/credentials"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Recruiter credentials verification failed: {response.text}",
+            )
+        return response.json()
 
 # ================== Dit zou moeten werken (zie nieuwe payment_service)
 async def authorize_credit_card(user_id: str, status: int):
