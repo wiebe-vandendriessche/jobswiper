@@ -92,10 +92,10 @@ async def job_create(
             remove_all_jobs_cache()
 
         # Step 2: Check recruiter credentials
-        # await check_recruiter_credentials(user["id"])
+        await check_recruiter_credentials(user["id"])
 
         # Step 3: Authorize credit card (mocked service)
-        # Status is hardcoded to 1 for successful authorization
+        # Status is hardcoded to 1 for successful authorization -> extra veld in POST naar api toevoegen om 0 of 1 mee te geven
         await authorize_credit_card(user["id"], status=1)
 
         # Step 4a: Publish to RabbitMQ
