@@ -53,11 +53,16 @@ services:
     restart: always
     depends_on:
       - jwt_auth # API Gateway depends on authentication service
+      - rabbitmq
     environment:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
+      MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
       JOB_MANAGEMENT_SERVICE_URL: "http://job_management_service:8000"
       THIS_SERVICE: "api_gateway"
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      SWIPES_BUS: swipes
     networks:
       - private-network
 
@@ -90,6 +95,20 @@ services:
     networks:
       - private-network
 
+
+  mysql_matching:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: matching_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    networks:
+      - private-network
+    volumes:
+      - msql_matching_data:/var/lib/mysql # This ensures data persists
+      - ./init-db:/docker-entrypoint-initdb.d
+
   mysql_jobs:
     image: mysql:8.0
     environment:
@@ -102,6 +121,37 @@ services:
     volumes:
       - msql_jobs_data:/var/lib/mysql # This ensures data persists
       - ./init-db:/docker-entrypoint-initdb.d
+
+  matching:
+    build:
+      context: ./matching
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - mysql_matching
+    environment:
+      DATABASE_SERVICE: mysql_matching
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DB: matching_db
+      MYSQL_PORT: 3306
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      SWIPES_BUS: swipes
+    networks:
+      - private-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5000:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq # Persistent storage for RabbitMQ data
+
 
   job_management_service:
     build:
@@ -122,8 +172,9 @@ services:
 volumes:
   msql_profiles_data:
   msql_auth_data:
+  msql_matching_data:
+  rabbitmq_data:
   msql_jobs_data:
-
 
 networks:
   private-network:

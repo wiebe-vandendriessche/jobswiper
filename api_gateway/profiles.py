@@ -53,7 +53,7 @@ async def profile_create(
                 status_code=500, detail=f"Internal server error: {str(exc)}"
             )
 
-@Profile_router.get("/{username}")
+@Profile_router.get("/{username}",response_model=Union[IJobSeeker,IRecruiter])
 async def profile_get(
     username:str,
     user: Annotated[dict, Depends(verify_token_get_user)]

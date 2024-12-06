@@ -9,6 +9,7 @@ from interfaces import (
 
 
 class ProfileManagementService:
+    # DEPENDENCY INJECTION OF ALL ADAPTERS (ONION ARCHITECTURE: ONLY INWARD DEPENDENCIES)
     def __init__(
         self,
         job_seeker_repo: IJobSeekerRepository,

@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid
 from pydantic import BaseModel
 
 
@@ -81,7 +82,7 @@ class JobSeeker(UserProfile):
         salary: Salary = Salary(),
         date_of_birth: Optional[str] = None,
         phone_number: Optional[str] = None,
-        id: Optional[int] = None,
+        id: Optional[str] = None,
     ):
         # Initialize parent class with common attributes
         super().__init__(

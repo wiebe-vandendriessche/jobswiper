@@ -1,0 +1,9 @@
+fastapi
+pymongo
+uvicorn
+motor
+pydantic
+aio_pika
+asyncio
+mysql-connector-python
+sqlalchemy

@@ -12,6 +12,7 @@ class ISalary(BaseModel):
 
 
 class IUserProfile(BaseModel):
+    id: Optional[str] = None
     username: str
     first_name: str
     last_name: str
