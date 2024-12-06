@@ -56,6 +56,7 @@ services:
     environment:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
+      JOB_MANAGEMENT_SERVICE_URL: "http://job_management_service:8000"
       THIS_SERVICE: "api_gateway"
     networks:
       - private-network
@@ -89,9 +90,39 @@ services:
     networks:
       - private-network
 
+  mysql_jobs:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: jobs_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    networks:
+      - private-network
+    volumes:
+      - msql_jobs_data:/var/lib/mysql # This ensures data persists
+      - ./init-db:/docker-entrypoint-initdb.d
+
+  job_management_service:
+    build:
+      context: ./job_service # Set up a new folder for API Gateway
+      dockerfile: Dockerfile # Dockerfile for the API Gateway
+    restart: always
+    depends_on:
+      - mysql_jobs # API Gateway depends on authentication service
+    environment:
+      DATABASE_SERVICE: mysql_jobs
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DB: jobs_db
+      MYSQL_PORT: 3306
+    networks:
+      - private-network
+
 volumes:
   msql_profiles_data:
   msql_auth_data:
+  msql_jobs_data:
 
 
 networks:
