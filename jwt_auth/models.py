@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String
 
 class Users(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(36), primary_key=True, index=True)
     username = Column(
         String(255), unique=True, index=True
     )  # Added length to String + Indexing

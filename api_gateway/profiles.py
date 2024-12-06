@@ -33,7 +33,8 @@ async def profile_create(
         raise HTTPException(
             status_code=403, detail="Username mismatch: Unauthorized action."
         )
-
+    
+    data.id=user["id"] #zodat dezelfde id heeft over verschillende databases
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts"
 
     async with httpx.AsyncClient() as client:
