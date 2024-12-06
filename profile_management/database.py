@@ -7,6 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Float, JSON
 from sqlalchemy.orm import Session
+from contextlib import contextmanager
 import os
 
 from domain_model import JobSeeker, Recruiter, Salary
@@ -63,6 +64,7 @@ class JobSeekerRepository(IJobSeekerRepository):
     async def find_by_username(self, username: str) -> Optional[JobSeeker]:
         with self.get_db() as db:
             job_seeker = (
+
                 db.query(JobSeekerModel)
                 .filter(JobSeekerModel.username == username)
                 .first()
@@ -70,6 +72,7 @@ class JobSeekerRepository(IJobSeekerRepository):
             if job_seeker:
                 return JobSeeker(
                     id=job_seeker.id,
+
                     username=job_seeker.username,
                     first_name=job_seeker.first_name,
                     last_name=job_seeker.last_name,

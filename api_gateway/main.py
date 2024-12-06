@@ -8,11 +8,21 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from caching import cache_token, get_user_from_cached_token
 
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
 # redis caching database init:
 
+
+# Allow requests from the frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000","http://localhost:5173"],  # from docker container # from vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Authentication service URL from environment variable
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL")
@@ -172,6 +182,10 @@ If the token is invalid or expired, the user receives a 401 Unauthorized respons
 async def protected_data(user: Annotated[dict, Depends(verify_token_get_user)]):
     # This route is now protected. It can only be accessed by users with a valid token.
     return {"message": f"Hello {user['username']}, you have access!"}
+
+@app.get("/get-user-account")
+async def get_user_account(user: Annotated[dict, Depends(verify_token_get_user)]):
+    return user
 
 
 # -------------------------------------------------Profile Management Service --------------------------------------------------------------------------
