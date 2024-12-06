@@ -20,6 +20,8 @@ services:
       MYSQL_DATABASE: auth_db
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
+    ports:
+      - 3306:3306
     networks:
       - private-network
     volumes:
@@ -69,6 +71,8 @@ services:
       MYSQL_PASSWORD: user_password
     networks:
       - private-network
+    ports:
+      - 3307:3306
     volumes:
       - msql_profiles_data:/var/lib/mysql # This ensures data persists
       - ./init-db:/docker-entrypoint-initdb.d

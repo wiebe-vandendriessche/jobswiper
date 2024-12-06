@@ -3,6 +3,7 @@ import { Person } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import { Forum } from '@mui/icons-material';
 import { useNavigate } from "react-router-dom";
+import { Button } from '@mui/material';
 
 import "./header.css";
 
@@ -12,15 +13,21 @@ function Header(props) {
   const handlePersonClick = () => {
     navigate("/auth"); // Navigate to the auth route
   };
-  
+
+  const handleHomeClick = () => {
+    navigate("/"); // Navigate to the home route
+  }
+
   return (
     <div className="header">
       <IconButton onClick={handlePersonClick}>
         <Person fontSize="large" className="header__icon" />
       </IconButton>
-      <h1>
-        Job Finder
-      </h1>
+      <div onClick={handleHomeClick} className="header__logo">
+        <Button color="black">
+          <h1>Job Finder</h1>
+        </Button>
+      </div>
       <IconButton>
         <Forum fontSize="large" className="header__icon" />
       </IconButton>

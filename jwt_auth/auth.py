@@ -77,7 +77,7 @@ async def login_for_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    token = create_access_token(user.username, user.id, timedelta(minutes=15))
+    token = create_access_token(user.username, user.id, timedelta(minutes=1))
     return {"access_token": token, "token_type": "bearer"}
 
 
