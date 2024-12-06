@@ -49,13 +49,13 @@ class JobManagementService:
         jobs = await self.job_repo.find_all()
         return jobs
 
-    async def delete_job(self, job_id: int):
+    async def delete_job(self, job_id: str):
         job = await self.job_repo.find_by_id(job_id)
         if not job:
             raise ValueError(f"Job with ID {job_id} does not exist.")
         await self.job_repo.delete_by_id(job_id)
 
-    async def check_existing(self, job_id: Optional[int]) -> bool:
+    async def check_existing(self, job_id: Optional[str]) -> bool:
         if job_id is None:
             return False
         job = await self.job_repo.find_by_id(job_id)

@@ -20,8 +20,10 @@ class IJob(BaseModel):
     responsibilities: str
     requirements: str
     salary: ISalary = ISalary()
-    date_posted: Optional[date] = None
-    id: Optional[int] = None  # Optional as it might be assigned by the system
+    posted_by: str
+    posted_by_uuid: Optional[str] = None
+    date_posted: Optional[str] = None
+    id: Optional[str] = None  # Optional as it might be assigned by the system
 
 
 class JobUpdateRequest(BaseModel):  # Web API object only --> not included in domain model

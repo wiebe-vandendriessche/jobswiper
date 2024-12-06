@@ -30,7 +30,7 @@ def remove_profile_cache(username: str):
 
 
 # Cache job function
-def cache_job(job_id: int, job_details: str, ttl: int = 3600):
+def cache_job(job_id: str, job_details: str, ttl: int = 3600):
     """
     Cache job details for a specified job ID.
     
@@ -43,7 +43,7 @@ def cache_job(job_id: int, job_details: str, ttl: int = 3600):
 
 
 # Get job function
-def get_job(job_id: int):
+def get_job(job_id: str):
     """
     Retrieve cached job details by job ID.
     
@@ -55,9 +55,29 @@ def get_job(job_id: int):
     """
     return redis_client.get(f"job:{job_id}")
 
+def cache_all_jobs(jobs_details: str, ttl: int = 3600):
+    """
+    Cache all job postings.
+    
+    Args:
+        jobs_details (str): The details of all jobs in string format (e.g., JSON).
+        ttl (int): Time-to-live in seconds. Default is 3600 seconds (1 hour).
+    """
+    redis_client.setex("jobs:all", ttl, jobs_details)
+
+def get_all_jobs_cache() -> Union[str, None]:
+    """
+    Retrieve cached job postings.
+    
+    Returns:
+        str or None: The cached job postings as a string (e.g., JSON), or None if not cached.
+    """
+    cached_data = redis_client.get("jobs:all")
+    return cached_data.decode("utf-8") if cached_data else None
+
 
 # Remove job from cache
-def remove_job_cache(job_id: int):
+def remove_job_cache(job_id: str):
     """
     Remove cached job details by job ID.
     
@@ -65,6 +85,16 @@ def remove_job_cache(job_id: int):
         job_id (int): The ID of the job to remove from cache.
     """
     redis_client.delete(f"job:{job_id}")
+
+# Remove job from cache
+def remove_all_jobs_cache():
+    """
+    Remove cached job details by job ID.
+    
+    Args:
+        job_id (int): The ID of the job to remove from cache.
+    """
+    redis_client.delete(f"jobs:all")
 
 
 # Cache token function
