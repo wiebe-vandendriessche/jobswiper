@@ -58,6 +58,7 @@ services:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
       MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
+      JOB_MANAGEMENT_SERVICE_URL: "http://job_management_service:8000"
       THIS_SERVICE: "api_gateway"
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
@@ -94,6 +95,7 @@ services:
     networks:
       - private-network
 
+
   mysql_matching:
     image: mysql:8.0
     environment:
@@ -105,6 +107,19 @@ services:
       - private-network
     volumes:
       - msql_matching_data:/var/lib/mysql # This ensures data persists
+      - ./init-db:/docker-entrypoint-initdb.d
+
+  mysql_jobs:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: jobs_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    networks:
+      - private-network
+    volumes:
+      - msql_jobs_data:/var/lib/mysql # This ensures data persists
       - ./init-db:/docker-entrypoint-initdb.d
 
   matching:
@@ -136,6 +151,21 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq # Persistent storage for RabbitMQ data
+
+
+  job_management_service:
+    build:
+      context: ./job_service # Set up a new folder for API Gateway
+      dockerfile: Dockerfile # Dockerfile for the API Gateway
+    restart: always
+    depends_on:
+      - mysql_jobs # API Gateway depends on authentication service
+    environment:
+      DATABASE_SERVICE: mysql_jobs
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+      MYSQL_DB: jobs_db
+      MYSQL_PORT: 3306
     networks:
       - private-network
 
@@ -144,7 +174,7 @@ volumes:
   msql_auth_data:
   msql_matching_data:
   rabbitmq_data:
-
+  msql_jobs_data:
 
 networks:
   private-network:
