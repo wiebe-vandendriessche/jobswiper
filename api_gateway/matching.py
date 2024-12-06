@@ -21,6 +21,13 @@ async def user_recommendations(
     """
     Fetch the job recommendations ID's for the User
     """
+    # protect the endpoint
+    if user["id"] != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You requested the recommendations of a user with different user_id",
+        )
+
     url = f"{MATCHING_SERVICE_URL}/recommendations/user/{user_id}"  # Replace with actual URL
     async with httpx.AsyncClient() as client:
         try:
@@ -84,6 +91,13 @@ async def user_swipe(
     Swipe right or left on a job listing, based on the boolean in decision
 
     """
+
+    # protect the endpoint
+    if user["id"] != swipe.user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="User_id does not match the user who performed swipe: Unauthorized action.",
+        )
     # -----not done yet: check if userid matches swipe userid-----
     try:
         newswipe = Swipe(
