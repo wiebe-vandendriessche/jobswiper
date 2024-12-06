@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import TinderCard from 'react-tinder-card';
 import SwipeButton from './../swipebutton/SwipeButton';
 import './swipecards.css';
+
 
 function SwipeCards(props) {
     const [people, setPeople] = useState([
@@ -24,24 +25,32 @@ function SwipeCards(props) {
     ]);
 
     const [lastDirection, setLastDirection] = useState();
+    const [isSwiping, setIsSwiping] = useState(false); // Track swipe state
     const childRefs = useRef([]);
 
+    const swipe = (dir) => {
+        if (isSwiping) {
+            console.log('Swipe action blocked because a swipe is already in progress.');
+            return;
+        }
+        const activeIndex = people.length - 1;
+        const activeCard = childRefs.current[activeIndex];
+        if (activeCard) {
+            console.log(`Swipe started: ${dir}`);
+            setIsSwiping(true); // Set swiping state
+            activeCard.swipe(dir); // Programmatically trigger swipe
+        }
+    };
+
     const swiped = (direction, nameToDelete) => {
-        console.log("removing:" + nameToDelete);
+        console.log(`Removing: ${nameToDelete}`);
         setLastDirection(direction);
     };
 
     const outOfFrame = (name) => {
         console.log(`${name} left the screen`);
-        setPeople((prev) => prev.filter((person) => person.name !== name));
-    };
-
-    const swipe = (dir) => {
-        const activeIndex = people.length - 1; // Get the current top card index
-        const activeCard = childRefs.current[activeIndex]; // Access the correct card ref
-        if (activeCard) {
-            activeCard.swipe(dir); // Programmatically swipe
-        }
+        setPeople((prevPeople) => prevPeople.filter((person) => person.name !== name)); // Remove card
+        setIsSwiping(false); // Reset swiping state
     };
 
     return (
@@ -67,11 +76,16 @@ function SwipeCards(props) {
                     ))}
                 </div>
             </div>
-            <div className="infoText">
-                {lastDirection ? <h2>You swiped {lastDirection}</h2> : <h2>Swipe a card!</h2>}
-            </div>
+            {lastDirection ? (
+                <h2 className="infoText">You swiped {lastDirection}</h2>
+            ) : (
+                <h2 className="infoText" />
+            )}
             {/* Pass swipe actions as props to SwipeButton */}
-            <SwipeButton onSwipeLeft={() => swipe('left')} onSwipeRight={() => swipe('right')} />
+            <SwipeButton
+                onSwipeLeft={() => swipe('left')}
+                onSwipeRight={() => swipe('right')}
+            />
         </>
     );
 }
