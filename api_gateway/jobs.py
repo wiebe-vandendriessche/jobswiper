@@ -11,14 +11,6 @@ from main import verify_token_get_user
 
 Jobs_router = APIRouter(prefix="/jobs", tags=["jobs"])
 
-publisher = PikaPublisher(
-    os.getenv("BUS_SERVICE"), int(os.getenv("BUS_PORT", 5672)), os.getenv("JOBS_BUS")
-)
-
-@Jobs_router.on_event("startup")
-async def start_publisher():
-    await publisher.initialize()
-
 JOB_MANAGEMENT_SERVICE_URL = os.getenv("JOB_MANAGEMENT_SERVICE_URL")
 PROFILE_MANAGEMENT_SERVICE_URL = os.getenv("PROFILE_MANAGEMENT_SERVICE_URL")
 PAYMENT_SERVICE_URL = os.getenv("PAYMENT_SERVICE_URL")
@@ -95,7 +87,7 @@ async def job_create(
             response = await client.post(url, json=job_data.model_dump())
             response.raise_for_status()  # Raise exception for HTTP errors
             job_id = response.json().get("id")  # Retrieve job ID
-            remove_all_jobs_cache()
+            remove_all_jobs_cache(user["id"])
 
         # Step 2: Check recruiter credentials
         await check_recruiter_credentials(user["id"])
@@ -132,7 +124,7 @@ async def get_all_jobs(
         list[IJob]: A list of all job postings.
     """
         # Check if all jobs are cached
-    cache = get_all_jobs_cache()
+    cache = get_all_jobs_cache(user["id"])
     if cache:
         return json.loads(cache)
 
@@ -144,7 +136,7 @@ async def get_all_jobs(
             response.raise_for_status()  # Raise an error for HTTP errors
 
             jobs = response.json()  # Assumes the service returns a list of jobs
-            cache_all_jobs(json.dumps(jobs))  # Cache the jobs data
+            cache_all_jobs(user["id"], json.dumps(jobs))  # Cache the jobs data
             return jobs  # Assumes the service returns a list of jobs
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
@@ -167,7 +159,7 @@ async def job_get(
     Fetch the details of a job posting by job ID.
     """
     # Check if the job is cached
-    cache = get_job(job_id)
+    cache = get_job(job_id, user["id"])
     if cache:
         return json.loads(cache)
 
@@ -176,7 +168,7 @@ async def job_get(
         try:
             response = await client.get(url)
             response.raise_for_status()  # Raise an error for HTTP errors
-            cache_job(job_id, response.text)  # Cache the job details
+            cache_job(job_id, user["id"], response.text)  # Cache the job details
             return response.json()
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
@@ -209,8 +201,8 @@ async def job_update(
         try:
             response = await client.put(url, json=update_data.model_dump())
             response.raise_for_status()  # Raise an error for HTTP errors
-            remove_job_cache(job_id)  # Clear the cache for the updated job
-            remove_all_jobs_cache()
+            remove_job_cache(job_id, user["id"])  # Clear the cache for the updated job
+            remove_all_jobs_cache(user["id"])
             return response.json()
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
@@ -242,8 +234,8 @@ async def job_delete(
         try:
             response = await client.delete(url)
             response.raise_for_status()  # Raise an error for HTTP errors
-            remove_job_cache(job_id)
-            remove_all_jobs_cache()  # Clear the cache for the deleted job
+            remove_job_cache(job_id, user["id"])
+            remove_all_jobs_cache(user["id"])  # Clear the cache for the deleted job
             return {"message": "Job deleted successfully"}
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
@@ -255,10 +247,3 @@ async def job_delete(
                 status_code=500,
                 detail=f"An unexpected error occurred while deleting the job: {exc}",
             )
-
-
-# --------------------------------------Publisher endpoint----------------------------------------------------------------
-# initialize client on startup
-publisher = PikaPublisher(
-    os.getenv("BUS_SERVICE"), int(os.getenv("BUS_PORT", 5672)), os.getenv("JOBS_BUS")
-)
