@@ -173,6 +173,7 @@ services:
     restart: always
     depends_on:
       - mysql_jobs # API Gateway depends on authentication service
+      - rabbitmq
     environment:
       DATABASE_SERVICE: mysql_jobs
       MYSQL_USER: user
@@ -181,7 +182,7 @@ services:
       MYSQL_PORT: 3306
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
-      JOB_BUS: job_update
+      JOBS_BUS: job_update
     networks:
       - private-network
 

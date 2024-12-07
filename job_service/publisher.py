@@ -39,14 +39,14 @@ class ChangedJobPublisher(IChangedJobPublisher):
                 )
                 await asyncio.sleep(5)  # Async sleep for retrying
 
-    async def job_created(self, seeker: Job):
-        await self.__send_message(seeker)
+    async def job_created(self, job: Job):
+        await self.__send_message(job)
 
-    async def job_updated(self, seeker: Job):
-        await self.__send_message(seeker)
+    async def job_updated(self, job: Job):
+        await self.__send_message(job)
 
-    async def job_deleted(self, seeker: Job):
-        await self.__send_message(seeker)
+    async def job_deleted(self, job: Job):
+        await self.__send_message(job)
 
     async def __send_message(self, message: Job):
         # Convert payload to JSON and encode to bytes
