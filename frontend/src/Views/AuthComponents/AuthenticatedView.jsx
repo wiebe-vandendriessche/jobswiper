@@ -4,7 +4,7 @@ import ProfileUpdate from './ProfileUpdate';
 import JobDashboard from './JobDashboard';
 
 //const apiBaseUrl = "http://api_gateway:8080";
-const apiBaseUrl = "http://localhost:8080";
+const apiBaseUrl = "http://localhost:8081";
 //const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const AuthenticatedView = ({ userData, onLogout}) => {
