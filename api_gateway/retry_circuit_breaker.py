@@ -30,13 +30,7 @@ logger = logging.getLogger(__name__)
 async def fetch_data_with_circuit_breaker(
     method: str, url: str, payload: Optional[Dict] = None
 ):
-    try:
-        return await fetch_data_with_retry(method, url, payload)
-    except httpx.HTTPStatusError as exc:
-        # Raise an HTTPException with the same status code and error details -_> will be ignored by circuitbraker
-        raise HTTPException(
-            status_code=exc.response.status_code, detail=exc.response.json()
-        )
+    return await fetch_data_with_retry(method, url, payload)
 
 
 # -------------------------------Retry strategy with exponential backoff----------------------------------------------
