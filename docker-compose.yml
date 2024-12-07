@@ -190,6 +190,8 @@ services:
       context: ./job_service # Set up a new folder for API Gateway
       dockerfile: Dockerfile # Dockerfile for the API Gateway
     restart: always
+    ports:
+      - "4200:8000"
     depends_on:
       - mysql_jobs # API Gateway depends on authentication service
       - rabbitmq
