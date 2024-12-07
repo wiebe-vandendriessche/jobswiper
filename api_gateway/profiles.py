@@ -3,7 +3,9 @@ import os
 from typing import Annotated, Union
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
+from circuitbreaker import CircuitBreakerError
 
+from retry_circuit_breaker import fetch_data_with_circuit_breaker
 from caching import cache_profile, get_profile, remove_profile_cache
 from rest_interfaces.profile_interfaces import IJobSeeker, IRecruiter, IUserProfile, JobSeekerUpdateRequest, RecruiterUpdateRequest
 from main import verify_token_get_user
@@ -39,9 +41,12 @@ async def profile_create(
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(url, json=data.model_dump())
-            response.raise_for_status()  # Raise an exception for HTTP errors
+            response= await fetch_data_with_circuit_breaker("POST",url,data.model_dump())
             return response.json()  # Return the response from the external service
+        except CircuitBreakerError:
+            raise HTTPException(
+                status_code=503, detail="Service unavailable (circuit open)"
+            )
         except httpx.HTTPStatusError as exc:
             # Raise an HTTP exception with details from the external service
             raise HTTPException(
@@ -73,21 +78,24 @@ async def profile_get(
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts/{user["username"]}"
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(url)
-            response.raise_for_status()  # Raise an error for HTTP errors
+            response = await fetch_data_with_circuit_breaker("GET",url)
             cache_profile(user["username"],response.text)
             return response.json()
+        except CircuitBreakerError:
+            raise HTTPException(
+                status_code=503, detail="Service unavailable (circuit open)"
+            )
         except httpx.HTTPStatusError as exc:
             # Raise an HTTPException with the same status code and error details
             raise HTTPException(
                 status_code=exc.response.status_code,
-                detail=exc.response.json() 
+                detail=exc.response
             )
         except Exception as exc:
             # Handle non-HTTP exceptions
             raise HTTPException(
                 status_code=500,
-                detail=f"An unexpected error occurred while fetching the profile.: {exc}"
+                detail=f"An unexpected error occurred: {exc}"
             )
         
 @Profile_router.put("/jobseeker/{username}")
@@ -102,11 +110,14 @@ async def update_job_seeker(username: str, update_data: JobSeekerUpdateRequest,u
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/job_seeker/{username}"
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.put(url, json=update_data.model_dump())
-            response.raise_for_status()  # Raise an error for HTTP errors
+            response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
             #clear the original cache because you updated the person
             remove_profile_cache(username)
             return response.json()
+        except CircuitBreakerError:
+            raise HTTPException(
+                status_code=503, detail="Service unavailable (circuit open)"
+            )
         except httpx.HTTPStatusError as exc:
             # Raise an HTTPException with the same status code and error details
             raise HTTPException(
@@ -132,11 +143,14 @@ async def update_recruiter(username:str,update_data:RecruiterUpdateRequest,user:
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/recruiter/{username}"
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.put(url, json=update_data.model_dump())
-            response.raise_for_status()  # Raise an error for HTTP errors
+            response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
             #remove from cache
             remove_profile_cache(username)
             return response.json()
+        except CircuitBreakerError:
+            raise HTTPException(
+                status_code=503, detail="Service unavailable (circuit open)"
+            )
         except httpx.HTTPStatusError as exc:
             # Raise an HTTPException with the same status code and error details
             raise HTTPException(

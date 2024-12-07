@@ -49,7 +49,7 @@ class RecruiterModel(Base):
 
     id = Column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
-    )    
+    )
     username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -85,7 +85,7 @@ class JobSeekerRepository(IJobSeekerRepository):
                     salary=Salary(job_seeker.salary_min, job_seeker.salary_max),
                     interests=job_seeker.interests,
                     qualifications=job_seeker.qualifications,
-                    date_of_birth=job_seeker.date_of_birth,
+                    date_of_birth=str(job_seeker.date_of_birth),
                 )
             return None
 
@@ -144,13 +144,11 @@ class RecruiterRepository(IRecruiterRepository):
                     id=recruiter.id,
                 )
             return None
-    
+
     async def find_by_uuid(self, uuid: str) -> Optional[Recruiter]:
         with self.get_db() as db:
             recruiter = (
-                db.query(RecruiterModel)
-                .filter(RecruiterModel.id == uuid)
-                .first()
+                db.query(RecruiterModel).filter(RecruiterModel.id == uuid).first()
             )
             if recruiter:
                 return Recruiter(
