@@ -7,7 +7,7 @@ const apiBaseUrl = "http://localhost:8081";
 //const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 console.log("API Base URL:", apiBaseUrl);
 
-function AuthView() {
+function AuthView({ className }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
 
@@ -46,7 +46,7 @@ function AuthView() {
   };
 
   return (
-    <div className="authView">
+    <div className={className}>
       {isAuthenticated ? (
         <AuthenticatedView userData={userData} onLogout={handleLogout}/>
       ) : (
