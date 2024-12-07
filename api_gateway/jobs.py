@@ -3,7 +3,8 @@ import os
 from typing import Annotated, Union
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
-
+from circuitbreaker import CircuitBreakerError
+from retry_circuit_breaker import fetch_data_with_circuit_breaker
 from rabbit import PikaPublisher
 from caching import cache_all_jobs, cache_job, get_all_jobs_cache, get_job, remove_all_jobs_cache, remove_job_cache
 from rest_interfaces.job_interfaces import IJob, IJobPreview, JobUpdateRequest
@@ -26,26 +27,37 @@ QUEUE_NAME = "job_update"
 # ============== Check in PMS -> check_existing
 async def check_recruiter_credentials(user_id: str):
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/recruiter/{user_id}/credentials"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=f"Recruiter credentials verification failed: {response.text}",
-            )
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
         return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Recruiter credentials verification failed: {response.text}",
+        )
+
+            
+        
 
 # ================== Dit zou moeten werken (zie nieuwe payment_service)
 async def authorize_credit_card(user_id: str, status: int):
     url = f"{PAYMENT_SERVICE_URL}/authorize"
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, json={"user_id": user_id, "status": status})
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=f"Credit card authorization failed: {response.text}",
-            )
+    try:
+        response = await fetch_data_with_circuit_breaker("POST",url,{"user_id": user_id, "status": status})
         return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Recruiter credentials verification failed: {response.text}",
+        )
 
 # ================= Publishen naar job_update rabbitmq
 async def publish_to_rabbitmq(job_id: str, user_id: str):
@@ -83,11 +95,10 @@ async def job_create(
     job_data.posted_by_uuid=user["id"]
     try:
         url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs"
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=job_data.model_dump())
-            response.raise_for_status()  # Raise exception for HTTP errors
-            job_id = response.json().get("id")  # Retrieve job ID
-            remove_all_jobs_cache(user["id"])
+        response = await fetch_data_with_circuit_breaker("POST",url,job_data.model_dump())
+        job_id = response.json().get("id")  # Retrieve job ID
+        remove_all_jobs_cache(user["id"])
+
 
         # Step 2: Check recruiter credentials
         await check_recruiter_credentials(user["id"])
@@ -100,6 +111,10 @@ async def job_create(
         await publish_to_rabbitmq(job_id, user["id"])
 
         return {"status": "success", "job": response.json()}
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
 
     except Exception as exc:
         # Step 4b: Rollback - Delete the job
@@ -107,7 +122,7 @@ async def job_create(
             await job_delete(job_id, user)
         raise HTTPException(
             status_code=500,
-            detail=f"SAGA failed: {str(exc)}",
+            detail=f"SAGA failed: {str(exc)}, but rollback was done",
         )
         
 @Jobs_router.get("/", response_model=list[IJob])
@@ -129,25 +144,26 @@ async def get_all_jobs(
         return json.loads(cache)
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}"
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
+        jobs = response.json()  # Assumes the service returns a list of jobs
+        cache_all_jobs(user["id"], json.dumps(jobs))  # Cache the jobs data
+        return jobs  # Assumes the service returns a list of jobs
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Error from job management service: {exc.response.text}",
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while fetching jobs: {exc}",
+        )
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url)
-            response.raise_for_status()  # Raise an error for HTTP errors
-
-            jobs = response.json()  # Assumes the service returns a list of jobs
-            cache_all_jobs(user["id"], json.dumps(jobs))  # Cache the jobs data
-            return jobs  # Assumes the service returns a list of jobs
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=exc.response.status_code,
-                detail=f"Error from job management service: {exc.response.text}",
-            )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"An unexpected error occurred while fetching jobs: {exc}",
-            )
 
 
 @Jobs_router.get("/{job_id}", response_model=IJob)
@@ -164,22 +180,26 @@ async def job_get(
         return json.loads(cache)
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url)
-            response.raise_for_status()  # Raise an error for HTTP errors
-            cache_job(job_id, user["id"], response.text)  # Cache the job details
-            return response.json()
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=exc.response.status_code,
-                detail=exc.response.json(),
-            )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"An unexpected error occurred while fetching the job: {exc}",
-            )
+
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
+        cache_job(job_id, user["id"], response.text)  # Cache the job details
+        return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.json(),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while fetching the job: {exc}",
+        )
+
 
 @Jobs_router.get("/{job_id}/preview", response_model=IJobPreview)
 async def job_get_preview(
@@ -191,21 +211,23 @@ async def job_get_preview(
     """
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}/preview"
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url)
-            response.raise_for_status()  # Raise an error for HTTP errors
-            return response.json()
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=exc.response.status_code,
-                detail=exc.response.json(),
-            )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"An unexpected error occurred while fetching the job: {exc}",
-            )
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
+        return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.json(),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while fetching the job: {exc}",
+        )
 
 @Jobs_router.put("/{job_id}")
 async def job_update(
@@ -222,23 +244,26 @@ async def job_update(
     #     )
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.put(url, json=update_data.model_dump())
-            response.raise_for_status()  # Raise an error for HTTP errors
-            remove_job_cache(job_id, user["id"])  # Clear the cache for the updated job
-            remove_all_jobs_cache(user["id"])
-            return response.json()
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=exc.response.status_code,
-                detail=exc.response.json(),
-            )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"An unexpected error occurred while updating the job: {exc}",
-            )
+    try:
+        response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
+        remove_job_cache(job_id)  # Clear the cache for the updated job
+        remove_all_jobs_cache(user["id"])
+        return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.json(),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while updating the job: {exc}",
+        )
+
 
 
 @Jobs_router.delete("/{job_id}")
@@ -272,3 +297,4 @@ async def job_delete(
                 status_code=500,
                 detail=f"An unexpected error occurred while deleting the job: {exc}",
             )
+
