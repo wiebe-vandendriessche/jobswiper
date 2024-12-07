@@ -20,6 +20,8 @@ services:
       MYSQL_DATABASE: auth_db
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
+    ports:
+      - "3306:3306"
     networks:
       - private-network
     volumes:
@@ -75,6 +77,8 @@ services:
       MYSQL_DATABASE: profiles_db
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
+    ports:
+      - "3307:3306"
     networks:
       - private-network
     volumes:
@@ -121,6 +125,8 @@ services:
       MYSQL_DATABASE: jobs_db
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
+    ports:
+      - "3308:3306"
     networks:
       - private-network
     volumes:

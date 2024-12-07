@@ -6,8 +6,9 @@
     border-bottom: 3px solid lightgray;
 }
 .header__logo{
-    object-fit: contain;
+    align-items: center;    
 }
 .header__icon{
     padding: 20px;
+    color: #333;
 }

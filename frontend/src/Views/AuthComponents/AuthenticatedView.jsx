@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import ProfileCreate from './ProfileCreate';
 import ProfileUpdate from './ProfileUpdate';
+import JobDashboard from './JobDashboard';
 
 //const apiBaseUrl = "http://api_gateway:8080";
 const apiBaseUrl = "http://localhost:8080";
 //const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
-const AuthenticatedView = ({ userData, onLogout }) => {
+const AuthenticatedView = ({ userData, onLogout}) => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -24,7 +25,7 @@ const AuthenticatedView = ({ userData, onLogout }) => {
 
       if (response.status === 200) {
         const data = await response.json();
-        setProfile(data);
+        setProfile(data); // update profile in component state
       } else if (response.status === 404) {
         const errorData = await response.json();
         console.warn('Profile not found:', errorData.detail.detail);
@@ -77,6 +78,7 @@ const AuthenticatedView = ({ userData, onLogout }) => {
       <p><strong>Phone Number:</strong> {profile.phone_number || "Not provided"}</p>
       <p><strong>Company Name:</strong> {profile.company_name}</p>
       <ProfileUpdate profile={profile} username={userData.username} fetchProfile={fetchProfile} onLogout={onLogout} />
+      <JobDashboard profile={profile} username={userData.username}/>
     </div>
   );
 
