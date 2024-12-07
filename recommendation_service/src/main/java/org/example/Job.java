@@ -17,8 +17,6 @@ public class Job {
     private List<String> responsibilities;
     private List<String> requirements;
     private Salary salary;
-    @JsonProperty("posted_by")
-    private String postedBy;
     @JsonProperty("posted_by_uuid")
     private String postedByUuid;
     private String id;
@@ -38,7 +36,6 @@ public class Job {
             List<String> responsibilities,
             List<String> requirements,
             Salary salary,
-            String postedBy,
             String postedByUuid,
             String id,
             String date_posted
@@ -51,7 +48,6 @@ public class Job {
         this.responsibilities = responsibilities;
         this.requirements = requirements;
         this.salary = salary;
-        this.postedBy = postedBy;
         this.postedByUuid = postedByUuid;
         this.id = id;
         this.date_posted = date_posted;
@@ -122,13 +118,6 @@ public class Job {
         this.salary = salary;
     }
 
-    public String getPostedBy() {
-        return postedBy;
-    }
-
-    public void setPostedBy(String postedBy) {
-        this.postedBy = postedBy;
-    }
 
     public String getPostedByUuid() {
         return postedByUuid;
@@ -167,7 +156,6 @@ public class Job {
                 ", responsibilities=" + responsibilities +
                 ", requirements=" + requirements +
                 ", salary=" + salary +
-                ", postedBy='" + postedBy + '\'' +
                 ", postedByUuid='" + postedByUuid + '\'' +
                 ", DatePosted='" + date_posted + '\'' +
                 ", id='" + id + '\'' +

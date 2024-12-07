@@ -53,14 +53,13 @@ public class Main {
         List<String> responsibilities = List.of("Write code", "Review code", "Deploy applications");
         List<String> requirements = List.of("Java", "Spring", "AWS");
         Salary salary2 = new Salary(100000, 120000);
-        String postedBy = "HR Manager";
         String postedByUuid = "1234-5678-uuid";
         String id = "job-001";
         String datePosted = "2024-12-07";
 
         // Create Job instance
         Job job = new Job(
-                title, companyName, location, jobType, description, responsibilities, requirements, salary2, postedBy, postedByUuid, id, datePosted
+                title, companyName, location, jobType, description, responsibilities, requirements, salary2, postedByUuid, id, datePosted
         );
 
         elasticDB.insertJob(job);
