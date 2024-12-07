@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from typing import Annotated, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,14 +13,28 @@ from database import (
     Base,
     engine,
 )
+from publisher import ChangedJobPublisher
 from rest_interfaces.job_interfaces import IJob, JobUpdateRequest
 from domain_model import Job, Salary
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
+publisher = ChangedJobPublisher(
+    os.getenv("BUS_SERVICE"),
+    int(os.getenv("BUS_PORT", 5672)),
+    os.getenv("JOB_BUS"),
+)
+
+
+@app.on_event("startup")
+async def start_publisher():
+    await publisher.initialize()
+
 
 # Initialize the service
-service: JobManagementService = JobManagementService(JobRepository(SessionLocal))
+service: JobManagementService = JobManagementService(
+    JobRepository(SessionLocal), publisher
+)
 
 
 def get_db():
@@ -49,17 +64,17 @@ async def create_job(job_details: IJob):
         requirements=job_details.requirements,
         salary=Salary(job_details.salary.min, job_details.salary.max),
         posted_by=job_details.posted_by,
-        posted_by_uuid=job_details.posted_by_uuid
+        posted_by_uuid=job_details.posted_by_uuid,
     )
 
     try:
         job_id = await service.register_job(job)
+        return JSONResponse(
+            content={"message": "Job created successfully", "id": job_id},
+            status_code=201,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"{e}")
-    return JSONResponse(
-        content={"message": "Job created successfully", "id": job_id},
-        status_code=201,
-    )
 
 
 @app.get("/jobs/{recruiter_id}/{job_id}")
@@ -69,7 +84,7 @@ async def get_job(job_id: str, recruiter_id: str):
     - job_id: The ID of the job to fetch.
     """
     try:
-        
+
         job = await service.get_job(job_id, recruiter_id)
         return job
     except ValueError as e:

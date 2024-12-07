@@ -1,27 +1,30 @@
 from typing import List, Optional
 from datetime import date
 from domain_model import Job
-from interfaces import IJobRepository
+from interfaces import IChangedJobPublisher, IJobRepository
 from rest_interfaces.job_interfaces import JobUpdateRequest
 
 
 class JobManagementService:
-    def __init__(self, job_repo: IJobRepository):
+    def __init__(self, job_repo: IJobRepository, publisher: IChangedJobPublisher):
         self.job_repo = job_repo
+        self.publisher = publisher
 
     async def register_job(self, job: Job):
         exists = await self.check_existing(job.id, job.posted_by_uuid)
         if exists:
             raise ValueError(f"Job with ID {job.id} already exists.")
-        
+
         job_id = await self.job_repo.save(job)
         return job_id
 
-    async def update_job(self, job_id: str, recruiter_id: str, update: JobUpdateRequest):
+    async def update_job(
+        self, job_id: str, recruiter_id: str, update: JobUpdateRequest
+    ):
         job = await self.job_repo.find_by_id(job_id, recruiter_id)
         if not job:
             raise ValueError(f"Job with ID {job_id} does not exist.")
-        
+
         if update.title:
             job.update_job_details(title=update.title)
         if update.location:
@@ -36,8 +39,9 @@ class JobManagementService:
             job.update_requirements(update.requirements)
         if update.salary:
             job.update_salary(update.salary.min, update.salary.max)
-        
+
         await self.job_repo.save(job)
+        await self.publisher.job_updated(job)
 
     async def get_job(self, job_id: str, recruiter_id: str) -> Job:
         job = await self.job_repo.find_by_id(job_id, recruiter_id)
@@ -46,7 +50,7 @@ class JobManagementService:
         return job
 
     async def list_jobs(self, recruiter_id: str) -> List[Job]:
-        jobs = await self.job_repo.find_all({"posted_by_uuid":recruiter_id})
+        jobs = await self.job_repo.find_all({"posted_by_uuid": recruiter_id})
         return jobs
 
     async def delete_job(self, job_id: str, recruiter_id: str):

@@ -76,10 +76,7 @@ async def job_create(
     Returns:
         dict: The response from the Job Management Service.
     """
-    # if not user.get("is_recruiter", False):
-    #     raise HTTPException(
-    #         status_code=403, detail="Only recruiters can create job postings."
-    #     )
+   
 
     # Step 1: POST to job_service
     job_id = None
@@ -100,7 +97,7 @@ async def job_create(
         await authorize_credit_card(user["id"], status=job_data.payment)
 
         # Step 4a: Publish to RabbitMQ
-        #await publish_to_rabbitmq(response.json())
+        #await (response.json())
 
         return {"status": "success", "job": response.json()}
 

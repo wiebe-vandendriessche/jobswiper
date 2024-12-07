@@ -101,7 +101,7 @@ services:
       MYSQL_PORT: 3306
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
-      JOBSEEKER_BUS: jobseeker_updates
+      JOBSEEKER_BUS: jobseeker_update
     networks:
       - private-network
 
@@ -179,9 +179,12 @@ services:
       MYSQL_PASSWORD: user_password
       MYSQL_DB: jobs_db
       MYSQL_PORT: 3306
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      JOB_BUS: job_update
     networks:
       - private-network
-  
+
   payment_service:
     build:
       context: ./payment_service

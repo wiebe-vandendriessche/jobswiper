@@ -5,9 +5,7 @@ import uuid
 from sqlalchemy import Uuid
 
 
-
 class Salary:
-
     def __init__(self, min: float = 0, max: float = 300000):
         self.min = min
         self.max = max
@@ -31,7 +29,13 @@ class Salary:
 
     def __repr__(self):
         return f"Salary(min={self.min}$, max={self.max}$')"
-    
+
+    def to_json(self):
+        return {
+            "min": self.min,
+            "max": self.max,
+        }
+
 
 class Job:
     def __init__(
@@ -44,8 +48,8 @@ class Job:
         responsibilities: str,
         requirements: str,
         salary: Salary = Salary(),
-        posted_by= str,
-        posted_by_uuid= str,
+        posted_by: str = "",
+        posted_by_uuid: str = "",
         id: Optional[str] = None,
     ):
         self.title = title  # Job title
@@ -56,8 +60,8 @@ class Job:
         self.responsibilities = responsibilities  # List of job responsibilities
         self.requirements = requirements  # List of job requirements
         self.salary = salary  # Default salary range
-        self.posted_by= posted_by
-        self.posted_by_uuid= posted_by_uuid
+        self.posted_by = posted_by
+        self.posted_by_uuid = posted_by_uuid
         self.date_posted = date.today().isoformat()  # Date job was posted
         self.id = id or str(uuid.uuid4())  # Unique identifier for the job (optional)
 
@@ -91,12 +95,26 @@ class Job:
         Update the salary range.
         This assumes validation is handled by the Salary microservice.
         """
-        self.salary.update_salary_range(min,max)
+        self.salary.update_salary_range(min, max)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "company_name": self.company_name,
+            "location": self.location,
+            "job_type": self.job_type,
+            "description": self.description,
+            "responsibilities": self.responsibilities,
+            "requirements": self.requirements,
+            "salary": self.salary.to_json(),  # Nested serialization of Salary
+            "posted_by": self.posted_by,
+            "posted_by_uuid": self.posted_by_uuid,
+            "date_posted": self.date_posted,
+        }
 
     def __repr__(self):
         return (
             f"Job(title='{self.title}', company_name='{self.company_name}', location='{self.location}', "
-            f"job_type='{self.job_type}', salary={self.salary}, date_posted='{self.date_posted}', "
+            f"job_type='{self.job_type}', salary={self.salary}, date_posted='{self.date_posted}')"
         )
-
-
