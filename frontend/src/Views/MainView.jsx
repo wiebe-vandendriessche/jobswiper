@@ -1,8 +1,8 @@
 import SwipeCards from "./../Components/swipecards/SwipeCards";
 
-function MainView() {
+function MainView({ className }) {
   return (
-    <div className="MainView">
+    <div className={className}>
       <SwipeCards />
     </div>
   );
