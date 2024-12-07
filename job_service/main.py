@@ -67,7 +67,6 @@ async def create_job(job_details: IJob):
         responsibilities=job_details.responsibilities,
         requirements=job_details.requirements,
         salary=Salary(job_details.salary.min, job_details.salary.max),
-        posted_by=job_details.posted_by,
         posted_by_uuid=job_details.posted_by_uuid,
     )
 
