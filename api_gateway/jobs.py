@@ -1,7 +1,6 @@
 import json
 import os
 from typing import Annotated, Union
-from aio_pika import Message, connect_robust
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
 
