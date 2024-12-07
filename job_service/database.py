@@ -59,6 +59,24 @@ class JobRepository:
                     id=job.id
                 )
             return None
+        
+    async def find_by_id_preview(self, job_id: str) -> Optional[Job]:
+        with self.get_db() as db:
+            job = db.query(JobModel).filter(JobModel.id == job_id).first()
+            if job:
+                return Job(
+                    title=job.title,
+                    company_name=job.company_name,
+                    location=job.location,
+                    job_type=job.job_type,
+                    description=job.description,
+                    responsibilities=job.responsibilities,
+                    requirements=job.requirements,
+                    salary=Salary(job.salary_min, job.salary_max),
+                    posted_by_uuid=job.posted_by_uuid,
+                    id=job.id
+                )
+            return None
 
     async def save(self, job: Job):
         with self.get_db() as db:

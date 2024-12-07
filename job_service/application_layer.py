@@ -49,6 +49,12 @@ class JobManagementService:
             raise ValueError(f"Job with ID {job_id} does not exist.")
         return job
 
+    async def get_job_preview(self, job_id: str) -> Job:
+        job = await self.job_repo.find_by_id_preview(job_id)
+        if not job:
+            raise ValueError(f"Job with ID {job_id} does not exist. Preview couldn't be returned")
+        return job
+
     async def list_jobs(self, recruiter_id: str) -> List[Job]:
         jobs = await self.job_repo.find_all({"posted_by_uuid": recruiter_id})
         return jobs

@@ -48,7 +48,8 @@ def get_job(job_id: str, recruiter_id: str):
     Retrieve cached job details by job ID.
     
     Args:
-        job_id (int): The ID of the job to retrieve.
+        job_id (str): The ID of the job to retrieve.
+        recruiter_id (str): The ID of the recruiter
     
     Returns:
         str: Cached job details if available, else None.

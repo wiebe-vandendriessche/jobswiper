@@ -17,6 +17,11 @@ class IJobRepository(ABC):
         pass
 
     @abstractmethod
+    async def find_by_id_preview(self, job_id: str) -> Optional[Job]:
+        """Retrieve a job preview by its unique identifier."""
+        pass
+
+    @abstractmethod
     async def find_all(self, filters: Optional[dict] = None) -> List[Job]:
         """
         Retrieve all jobs matching the given filters.

@@ -31,3 +31,13 @@ class JobUpdateRequest(BaseModel):
     responsibilities: Optional[List[str]] = None
     requirements: Optional[List[str]] = None
     salary: Optional[ISalary] = None
+
+class IJobPreview(BaseModel):
+    title: Optional[str] = None
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    job_type: Optional[str] = None
+    description: Optional[str] = None
+    responsibilities: Optional[List[str]] = None
+    requirements: Optional[List[str]] = None
+    salary: Optional[ISalary] = None

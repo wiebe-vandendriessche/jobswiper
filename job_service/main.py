@@ -79,6 +79,17 @@ async def create_job(job_details: IJob):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"{e}")
 
+@app.get("/jobs/{job_id}/preview")
+async def get_job_preview(job_id: str):
+    """
+    Get job details by ID.
+    - job_id: The ID of the job to fetch.
+    """
+    try:
+        job = await service.get_job_preview(job_id)
+        return job
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=f"{e}")
 
 @app.get("/jobs/{recruiter_id}/{job_id}")
 async def get_job(job_id: str, recruiter_id: str):

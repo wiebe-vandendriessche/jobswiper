@@ -6,7 +6,7 @@ import httpx
 
 from rabbit import PikaPublisher
 from caching import cache_all_jobs, cache_job, get_all_jobs_cache, get_job, remove_all_jobs_cache, remove_job_cache
-from rest_interfaces.job_interfaces import IJob, JobUpdateRequest
+from rest_interfaces.job_interfaces import IJob, IJobPreview, JobUpdateRequest
 from main import verify_token_get_user
 
 Jobs_router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -181,6 +181,31 @@ async def job_get(
                 detail=f"An unexpected error occurred while fetching the job: {exc}",
             )
 
+@Jobs_router.get("/{job_id}/preview", response_model=IJobPreview)
+async def job_get_preview(
+    job_id: str,
+    user: Annotated[dict, Depends(verify_token_get_user)],
+):
+    """
+    Fetch a preview of a job posting by job ID.
+    """
+
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}/preview"
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url)
+            response.raise_for_status()  # Raise an error for HTTP errors
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=exc.response.status_code,
+                detail=exc.response.json(),
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"An unexpected error occurred while fetching the job: {exc}",
+            )
 
 @Jobs_router.put("/{job_id}")
 async def job_update(
