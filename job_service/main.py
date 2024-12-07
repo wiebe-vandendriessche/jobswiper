@@ -62,50 +62,51 @@ async def create_job(job_details: IJob):
     )
 
 
-@app.get("/jobs/{job_id}")
-async def get_job(job_id: str):
+@app.get("/jobs/{recruiter_id}/{job_id}")
+async def get_job(job_id: str, recruiter_id: str):
     """
     Get job details by ID.
     - job_id: The ID of the job to fetch.
     """
     try:
-        job = await service.get_job(job_id)
+        
+        job = await service.get_job(job_id, recruiter_id)
         return job
     except ValueError as e:
         raise HTTPException(status_code=404, detail=f"{e}")
 
 
-@app.get("/jobs")
-async def list_jobs():
+@app.get("/jobs/{recruiter_id}")
+async def list_jobs(recruiter_id: str):
     """
     List all available jobs.
     """
-    jobs = await service.list_jobs()
+    jobs = await service.list_jobs(recruiter_id)
     return jobs
 
 
-@app.put("/jobs/{job_id}")
-async def update_job(job_id: str, updates: JobUpdateRequest):
+@app.put("/jobs/{recruiter_id}/{job_id}")
+async def update_job(job_id: str, recruiter_id: str, updates: JobUpdateRequest):
     """
     Update job details.
     - job_id: ID of the job to update.
     - updates: The updates to apply to the job.
     """
     try:
-        await service.update_job(job_id, updates)
+        await service.update_job(job_id, recruiter_id, updates)
         return {"message": "Job updated successfully"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@app.delete("/jobs/{job_id}")
-async def delete_job(job_id: str):
+@app.delete("/jobs/{recruiter_id}/{job_id}")
+async def delete_job(job_id: str, recruiter_id: str):
     """
     Delete a job by its ID.
     - job_id: ID of the job to delete.
     """
     try:
-        await service.delete_job(job_id)
+        await service.delete_job(job_id, recruiter_id)
         return {"message": "Job deleted successfully"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

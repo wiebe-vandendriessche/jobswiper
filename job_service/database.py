@@ -42,9 +42,9 @@ class JobRepository:
     def __init__(self, sessionmaker: sessionmaker):
         self.sessionmaker = sessionmaker
 
-    async def find_by_id(self, job_id: str) -> Optional[Job]:
+    async def find_by_id(self, job_id: str, recruiter_id: str) -> Optional[Job]:
         with self.get_db() as db:
-            job = db.query(JobModel).filter(JobModel.id == job_id).first()
+            job = db.query(JobModel).filter(JobModel.posted_by_uuid == recruiter_id).filter(JobModel.id == job_id).first()
             if job:
                 return Job(
                     title=job.title,

@@ -83,6 +83,7 @@ async def job_create(
 
     # Step 1: POST to job_service
     job_id = None
+    job_data.posted_by_uuid=user["id"]
     try:
         url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs"
         async with httpx.AsyncClient() as client:
@@ -130,7 +131,7 @@ async def get_all_jobs(
     if cache:
         return json.loads(cache)
 
-    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs"
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}"
 
     async with httpx.AsyncClient() as client:
         try:
@@ -165,7 +166,7 @@ async def job_get(
     if cache:
         return json.loads(cache)
 
-    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}"
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url)
@@ -198,7 +199,7 @@ async def job_update(
     #         status_code=403, detail="Only recruiters can update job postings."
     #     )
 
-    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}"
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.put(url, json=update_data.model_dump())
@@ -231,7 +232,7 @@ async def job_delete(
     #         status_code=403, detail="Only recruiters can delete job postings."
     #     )
 
-    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}"
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.delete(url)
@@ -254,5 +255,5 @@ async def job_delete(
 # --------------------------------------Publisher endpoint----------------------------------------------------------------
 # initialize client on startup
 publisher = PikaPublisher(
-    os.getenv("BUS_SERVICE"), int(os.getenv("BUS_PORT", 5672)), os.getenv("SWIPES_BUS")
+    os.getenv("BUS_SERVICE"), int(os.getenv("BUS_PORT", 5672)), os.getenv("JOBS_BUS")
 )
