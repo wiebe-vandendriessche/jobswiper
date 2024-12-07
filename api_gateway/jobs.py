@@ -246,7 +246,7 @@ async def job_update(
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
     try:
         response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
-        remove_job_cache(job_id)  # Clear the cache for the updated job
+        remove_job_cache(job_id, user["id"])  # Clear the cache for the updated job
         remove_all_jobs_cache(user["id"])
         return response.json()
     except CircuitBreakerError:
