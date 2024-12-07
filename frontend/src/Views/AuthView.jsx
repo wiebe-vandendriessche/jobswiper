@@ -3,7 +3,7 @@ import AuthForm from "./AuthComponents/AuthForm";
 import AuthenticatedView from "./AuthComponents/AuthenticatedView";
 
 //const apiBaseUrl = "http://api_gateway:8080";
-const apiBaseUrl = "http://localhost:8080";
+const apiBaseUrl = "http://localhost:8081";
 //const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 console.log("API Base URL:", apiBaseUrl);
 

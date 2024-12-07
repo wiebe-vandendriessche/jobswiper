@@ -11,7 +11,7 @@ services:
     networks:
       - private-network
     environment:
-      REACT_APP_API_BASE_URL: "http://api_gateway:8080"
+      REACT_APP_API_BASE_URL: "http://nginx_api_gateway:8081"
 
   mysql_auth:
     image: mysql:8.0
@@ -46,12 +46,24 @@ services:
     networks:
       - private-network
 
+  nginx_api_gateway:
+    image: nginx:latest
+    container_name: nginx_api_gateway
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api_gateway 
+    networks:
+      - private-network
+
   api_gateway:
     build:
       context: ./api_gateway # Set up a new folder for API Gateway
       dockerfile: Dockerfile # Dockerfile for the API Gateway
     ports:
-      - "8080:8080" # Expose API Gateway port
+      - "0:8080" # dynamic ports for the replicas
     restart: always
     depends_on:
       - jwt_auth # API Gateway depends on authentication service
@@ -69,6 +81,13 @@ services:
       JOBS_BUS: job_update
     networks:
       - private-network
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 
   mysql_profiles:
     image: mysql:8.0
@@ -199,7 +218,6 @@ volumes:
   msql_matching_data:
   rabbitmq_data:
   msql_jobs_data:
-
 
 networks:
   private-network:
