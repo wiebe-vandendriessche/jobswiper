@@ -23,6 +23,10 @@ class IRecruiterRepository(ABC):
     @abstractmethod
     async def find_by_username(self, username: str) -> Optional[Recruiter]:
         pass
+    
+    @abstractmethod
+    async def find_by_uuid(self, uuid: str) -> Optional[Recruiter]:
+        pass
 
 
 # message publisher adapter
