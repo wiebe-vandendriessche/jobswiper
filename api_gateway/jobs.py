@@ -57,7 +57,7 @@ async def authorize_credit_card(user_id: str, status: int):
 
 # ================= Publishen naar job_update rabbitmq
 async def publish_to_rabbitmq(job_id: str, user_id: str):
-    url = f"{JOB_MANAGEMENT_SERVICE_URL}/{user_id}/{job_id}"
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user_id}/{job_id}"
     async with httpx.AsyncClient() as client:
         response = await client.post(url)
         if response.status_code != 200:
