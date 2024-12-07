@@ -20,6 +20,6 @@ async def authorize(payment_request: PaymentRequest):
     if payment_request.status == 1:
         return {"status": "authorized", "user_id": payment_request.user_id}
     elif payment_request.status == 0:
-        raise HTTPException(status_code=400, detail="Payment authorization failed.")
+        raise HTTPException(status_code=401, detail="Payment authorization failed.")
     else:
         raise HTTPException(status_code=422, detail="Invalid status value. Use 0 or 1.")

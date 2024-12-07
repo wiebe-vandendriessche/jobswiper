@@ -53,11 +53,11 @@ async def create_job(job_details: IJob):
     )
 
     try:
-        await service.register_job(job)
+        job_id = await service.register_job(job)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"{e}")
     return JSONResponse(
-        content={"message": "Job created successfully"},
+        content={"message": "Job created successfully", "id": job_id},
         status_code=201,
     )
 

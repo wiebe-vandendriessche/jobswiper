@@ -14,8 +14,8 @@ class JobManagementService:
         if exists:
             raise ValueError(f"Job with ID {job.id} already exists.")
         
-        await self.job_repo.save(job)
-        return job
+        job_id = await self.job_repo.save(job)
+        return job_id
 
     async def update_job(self, job_id: str, update: JobUpdateRequest):
         job = await self.job_repo.find_by_id(job_id)

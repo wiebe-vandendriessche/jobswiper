@@ -96,7 +96,7 @@ async def job_create(
 
         # Step 3: Authorize credit card (mocked service)
         # Status is hardcoded to 1 for successful authorization -> extra veld in POST naar api toevoegen om 0 of 1 mee te geven
-        await authorize_credit_card(user["id"], status=1)
+        await authorize_credit_card(user["id"], status=job_data.payment)
 
         # Step 4a: Publish to RabbitMQ
         #await publish_to_rabbitmq(response.json())
@@ -106,7 +106,7 @@ async def job_create(
     except Exception as exc:
         # Step 4b: Rollback - Delete the job
         if job_id:
-            await job_delete(job_id)
+            await job_delete(job_id, user)
         raise HTTPException(
             status_code=500,
             detail=f"SAGA failed: {str(exc)}",

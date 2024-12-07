@@ -23,7 +23,7 @@ Base = declarative_base()
 class JobModel(Base):
     __tablename__ = "jobs"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
+    id = Column(String(36), primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(String(1000), nullable=False)
     location = Column(String(255), nullable=False)
@@ -47,7 +47,6 @@ class JobRepository:
             job = db.query(JobModel).filter(JobModel.id == job_id).first()
             if job:
                 return Job(
-                    id=job.id,
                     title=job.title,
                     company_name=job.company_name,
                     location=job.location,
@@ -82,6 +81,9 @@ class JobRepository:
                 db_job.id = job.id
             db.merge(db_job)  # Check if exists and update or create
             db.commit()
+
+            return db_job.id
+
     
     @contextmanager
     def get_db(self):

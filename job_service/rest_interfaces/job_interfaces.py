@@ -9,7 +9,6 @@ class ISalary(BaseModel):
 
 
 class IJob(BaseModel):
-    id: str = None
     title: str
     company_name: str
     location: str
@@ -23,7 +22,6 @@ class IJob(BaseModel):
 
 
 class JobCreateRequest(BaseModel):
-    id: str = None
     title: str
     company_name: str
     location: str
