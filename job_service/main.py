@@ -1,3 +1,4 @@
+import logging
 import os
 from fastapi import FastAPI
 from typing import Annotated, Any, List, Optional
@@ -17,12 +18,15 @@ from publisher import ChangedJobPublisher
 from rest_interfaces.job_interfaces import IJob, JobUpdateRequest
 from domain_model import Job, Salary
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 publisher = ChangedJobPublisher(
     os.getenv("BUS_SERVICE"),
     int(os.getenv("BUS_PORT", 5672)),
-    os.getenv("JOB_BUS"),
+    os.getenv("JOBS_BUS"),
 )
 
 
@@ -82,6 +86,7 @@ async def get_job(job_id: str, recruiter_id: str):
     """
     Get job details by ID.
     - job_id: The ID of the job to fetch.
+    - recruiter_id: ID of the recruiter to check authorization
     """
     try:
 
@@ -95,6 +100,7 @@ async def get_job(job_id: str, recruiter_id: str):
 async def list_jobs(recruiter_id: str):
     """
     List all available jobs.
+    - recruiter_id: ID of the recruiter to check authorization
     """
     jobs = await service.list_jobs(recruiter_id)
     return jobs
@@ -105,6 +111,7 @@ async def update_job(job_id: str, recruiter_id: str, updates: JobUpdateRequest):
     """
     Update job details.
     - job_id: ID of the job to update.
+    - recruiter_id: ID of the recruiter to check authorization
     - updates: The updates to apply to the job.
     """
     try:
@@ -119,9 +126,30 @@ async def delete_job(job_id: str, recruiter_id: str):
     """
     Delete a job by its ID.
     - job_id: ID of the job to delete.
+    - recruiter_id: ID of the recruiter to check authorization
     """
     try:
         await service.delete_job(job_id, recruiter_id)
         return {"message": "Job deleted successfully"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+
+@app.post("/jobs/{recruiter_id}/{job_id}")
+async def approve_job(job_id: str, recruiter_id):
+    """
+    Approve a job for publishing it to the matchmaking service
+    - job_id: ID of the job to approve
+    - recruiter_id: ID of the recruiter to check authorization
+    """
+    try:
+        job = await service.get_job(job_id, recruiter_id)
+        await publisher.job_created(job)
+        logger.info(f"JOB PUBLISHED: {job.id}")
+        return JSONResponse(
+            content={"message": "Job published successfully", "id": job_id},
+            status_code=200,
+        )
+    except ValueError as e:
+        logger.warning(f"JOB PUBLISHING FAILED: {job_id}")
+        raise HTTPException(status_code=404, delail=str(e))

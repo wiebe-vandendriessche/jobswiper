@@ -57,6 +57,7 @@ class JobRepository:
                     salary=Salary(job.salary_min, job.salary_max),
                     posted_by=job.posted_by,
                     posted_by_uuid=job.posted_by_uuid,
+                    id=job.id
                 )
             return None
 

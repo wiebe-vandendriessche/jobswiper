@@ -56,8 +56,17 @@ async def authorize_credit_card(user_id: str, status: int):
         return response.json()
 
 # ================= Publishen naar job_update rabbitmq
-# async def publish_to_rabbitmq(job_data: dict):
-#     ### JELLE PUBLISHER
+async def publish_to_rabbitmq(job_id: str, user_id: str):
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user_id}/{job_id}"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Publishing on queue failed: {response.text}",
+            )
+        return response.json()
+
 
 
 @Jobs_router.post("/")  # START SAGA
@@ -96,7 +105,7 @@ async def job_create(
         await authorize_credit_card(user["id"], status=job_data.payment)
 
         # Step 4a: Publish to RabbitMQ
-        #await (response.json())
+        await publish_to_rabbitmq(job_id, user["id"])
 
         return {"status": "success", "job": response.json()}
 
