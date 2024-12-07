@@ -34,6 +34,7 @@ class JobUpdateRequest(BaseModel):
 
 class IJobPreview(BaseModel):
     title: Optional[str] = None
+    company_name: Optional[str] = None
     location: Optional[str] = None
     job_type: Optional[str] = None
     description: Optional[str] = None
