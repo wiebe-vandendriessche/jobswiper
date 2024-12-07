@@ -45,10 +45,9 @@ class Job:
         location: str,
         job_type: str,  # e.g., 'Full-time', 'Part-time', 'Contract'
         description: str,
-        responsibilities: str,
-        requirements: str,
+        responsibilities: List[str],
+        requirements: List[str],
         salary: Salary = Salary(),
-        posted_by: str = "",
         posted_by_uuid: str = "",
         id: Optional[str] = None,
     ):
@@ -60,7 +59,6 @@ class Job:
         self.responsibilities = responsibilities  # List of job responsibilities
         self.requirements = requirements  # List of job requirements
         self.salary = salary  # Default salary range
-        self.posted_by = posted_by
         self.posted_by_uuid = posted_by_uuid
         self.date_posted = date.today().isoformat()  # Date job was posted
         self.id = id or str(uuid.uuid4())  # Unique identifier for the job (optional)
@@ -82,11 +80,11 @@ class Job:
         if description:
             self.description = description
 
-    def update_responsibilities(self, responsibilities: str):
+    def update_responsibilities(self, responsibilities: List[str]):
         """Update the list of responsibilities."""
         self.responsibilities = responsibilities
 
-    def update_requirements(self, requirements: str):
+    def update_requirements(self, requirements: List[str]):
         """Update the list of requirements."""
         self.requirements = requirements
 
@@ -108,13 +106,13 @@ class Job:
             "responsibilities": self.responsibilities,
             "requirements": self.requirements,
             "salary": self.salary.to_json(),  # Nested serialization of Salary
-            "posted_by": self.posted_by,
             "posted_by_uuid": self.posted_by_uuid,
             "date_posted": self.date_posted,
         }
 
     def __repr__(self):
         return (
-            f"Job(title='{self.title}', company_name='{self.company_name}', location='{self.location}', "
-            f"job_type='{self.job_type}', salary={self.salary}, date_posted='{self.date_posted}')"
+            f"Job(id='{self.id}',title='{self.title}', company_name='{self.company_name}', location='{self.location}', "
+            f"job_type='{self.job_type}', salary={self.salary}, description='{self.description}, responsibilities={self.responsibilities}, requirements={self.requirements}, "
+            f"salary={self.salary}, posted_by_uuid={self.posted_by_uuid}, date_posted='{self.date_posted}')"
         )

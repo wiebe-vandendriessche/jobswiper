@@ -7,12 +7,10 @@ from circuitbreaker import CircuitBreakerError
 from retry_circuit_breaker import fetch_data_with_circuit_breaker
 from rabbit import PikaPublisher
 from caching import cache_all_jobs, cache_job, get_all_jobs_cache, get_job, remove_all_jobs_cache, remove_job_cache
-from rest_interfaces.job_interfaces import IJob, JobUpdateRequest
+from rest_interfaces.job_interfaces import IJob, IJobPreview, JobUpdateRequest
 from main import verify_token_get_user
 
 Jobs_router = APIRouter(prefix="/jobs", tags=["jobs"])
-
-
 
 JOB_MANAGEMENT_SERVICE_URL = os.getenv("JOB_MANAGEMENT_SERVICE_URL")
 PROFILE_MANAGEMENT_SERVICE_URL = os.getenv("PROFILE_MANAGEMENT_SERVICE_URL")
@@ -62,8 +60,17 @@ async def authorize_credit_card(user_id: str, status: int):
         )
 
 # ================= Publishen naar job_update rabbitmq
-# async def publish_to_rabbitmq(job_data: dict):
-#     ### JELLE PUBLISHER
+async def publish_to_rabbitmq(job_id: str, user_id: str):
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user_id}/{job_id}"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Publishing on queue failed: {response.text}",
+            )
+        return response.json()
+
 
 
 @Jobs_router.post("/")  # START SAGA
@@ -90,7 +97,8 @@ async def job_create(
         url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs"
         response = await fetch_data_with_circuit_breaker("POST",url,job_data.model_dump())
         job_id = response.json().get("id")  # Retrieve job ID
-        remove_all_jobs_cache()
+        remove_all_jobs_cache(user["id"])
+
 
         # Step 2: Check recruiter credentials
         await check_recruiter_credentials(user["id"])
@@ -100,7 +108,7 @@ async def job_create(
         await authorize_credit_card(user["id"], status=job_data.payment)
 
         # Step 4a: Publish to RabbitMQ
-        #await (response.json())
+        await publish_to_rabbitmq(job_id, user["id"])
 
         return {"status": "success", "job": response.json()}
     except CircuitBreakerError:
@@ -131,16 +139,15 @@ async def get_all_jobs(
         list[IJob]: A list of all job postings.
     """
         # Check if all jobs are cached
-    cache = get_all_jobs_cache()
+    cache = get_all_jobs_cache(user["id"])
     if cache:
         return json.loads(cache)
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}"
     try:
-        
         response = await fetch_data_with_circuit_breaker("GET",url)
         jobs = response.json()  # Assumes the service returns a list of jobs
-        cache_all_jobs(json.dumps(jobs))  # Cache the jobs data
+        cache_all_jobs(user["id"], json.dumps(jobs))  # Cache the jobs data
         return jobs  # Assumes the service returns a list of jobs
     except CircuitBreakerError:
         raise HTTPException(
@@ -158,6 +165,7 @@ async def get_all_jobs(
         )
 
 
+
 @Jobs_router.get("/{job_id}", response_model=IJob)
 async def job_get(
     job_id: str,
@@ -167,15 +175,15 @@ async def job_get(
     Fetch the details of a job posting by job ID.
     """
     # Check if the job is cached
-    cache = get_job(job_id)
+    cache = get_job(job_id, user["id"])
     if cache:
         return json.loads(cache)
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
+
     try:
         response = await fetch_data_with_circuit_breaker("GET",url)
-        response.raise_for_status()  # Raise an error for HTTP errors
-        cache_job(job_id, response.text)  # Cache the job details
+        cache_job(job_id, user["id"], response.text)  # Cache the job details
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(
@@ -192,6 +200,34 @@ async def job_get(
             detail=f"An unexpected error occurred while fetching the job: {exc}",
         )
 
+
+@Jobs_router.get("/{job_id}/preview", response_model=IJobPreview)
+async def job_get_preview(
+    job_id: str,
+    user: Annotated[dict, Depends(verify_token_get_user)],
+):
+    """
+    Fetch a preview of a job posting by job ID.
+    """
+
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}/preview"
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
+        return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.json(),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while fetching the job: {exc}",
+        )
 
 @Jobs_router.put("/{job_id}")
 async def job_update(
@@ -211,7 +247,7 @@ async def job_update(
     try:
         response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
         remove_job_cache(job_id)  # Clear the cache for the updated job
-        remove_all_jobs_cache()
+        remove_all_jobs_cache(user["id"])
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(
@@ -227,6 +263,7 @@ async def job_update(
             status_code=500,
             detail=f"An unexpected error occurred while updating the job: {exc}",
         )
+
 
 
 @Jobs_router.delete("/{job_id}")
@@ -247,8 +284,8 @@ async def job_delete(
         try:
             response = await client.delete(url)
             response.raise_for_status()  # Raise an error for HTTP errors
-            remove_job_cache(job_id)
-            remove_all_jobs_cache()  # Clear the cache for the deleted job
+            remove_job_cache(job_id, user["id"])
+            remove_all_jobs_cache(user["id"])  # Clear the cache for the deleted job
             return {"message": "Job deleted successfully"}
         except httpx.HTTPStatusError as exc:
             raise HTTPException(

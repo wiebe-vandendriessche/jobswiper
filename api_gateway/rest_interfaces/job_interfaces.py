@@ -18,10 +18,9 @@ class IJob(BaseModel):
     location: str
     job_type: str  # e.g., 'Full-time', 'Part-time', 'Contract'
     description: str
-    responsibilities: str
-    requirements: str
+    responsibilities: List[str]
+    requirements: List[str]
     salary: ISalary = ISalary()
-    posted_by: str
     posted_by_uuid: Optional[str] = None
     date_posted: Optional[str] = None
     payment: Optional[int] = 1
@@ -32,7 +31,17 @@ class JobUpdateRequest(BaseModel):  # Web API object only --> not included in do
     location: Optional[str] = None
     job_type: Optional[str] = None
     description: Optional[str] = None
-    responsibilities: Optional[str] = None
-    requirements: Optional[str] = None
+    responsibilities: Optional[List[str]] = None
+    requirements: Optional[List[str]] = None
+    salary: Optional[ISalary] = None
+
+class IJobPreview(BaseModel):
+    title: Optional[str] = None
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    job_type: Optional[str] = None
+    description: Optional[str] = None
+    responsibilities: Optional[List[str]] = None
+    requirements: Optional[List[str]] = None
     salary: Optional[ISalary] = None
 

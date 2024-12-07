@@ -15,7 +15,7 @@ function App() {
           <Header/>
           <Routes>
             <Route path="/" element={<MainView className="MainView" />} />
-            <Route path="/auth" element={<AuthView/>} />
+            <Route path="/auth" element={<AuthView className="AuthView"/>} />
           </Routes>
         </div>
       </Router >

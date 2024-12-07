@@ -9,39 +9,35 @@ class ISalary(BaseModel):
 
 
 class IJob(BaseModel):
+    id: str
     title: str
     company_name: str
     location: str
-    job_type: str  # e.g., "Full-time", "Part-time", "Contract"
+    job_type: str  # e.g., 'Full-time', 'Part-time', 'Contract'
     description: str
-    responsibilities: str
-    requirements: str
+    responsibilities: List[str]
+    requirements: List[str]
     salary: ISalary = ISalary()
-    posted_by: str  # Recruiter's username
-    posted_by_uuid: str
-
-
-class JobCreateRequest(BaseModel):
-    title: str
-    company_name: str
-    location: str
-    job_type: str  # e.g., "Full-time", "Part-time", "Contract"
-    description: str
-    responsibilities: str
-    requirements: str
-    salary: ISalary = ISalary()
-    posted_by: str  # Recruiter's username
-    posted_by_uuid: str
+    posted_by_uuid: Optional[str] = None
+    date_posted: Optional[str] = None
+    payment: Optional[int] = 1
 
 
 class JobUpdateRequest(BaseModel):
-    title: str
-    company_name: str
-    location: str
-    job_type: str  # e.g., "Full-time", "Part-time", "Contract"
-    description: str
-    responsibilities: str
-    requirements: str
-    salary: ISalary = ISalary()
-    posted_by: str  # Recruiter's username
-    posted_by_uuid: str
+    title: Optional[str] = None
+    location: Optional[str] = None
+    job_type: Optional[str] = None
+    description: Optional[str] = None
+    responsibilities: Optional[List[str]] = None
+    requirements: Optional[List[str]] = None
+    salary: Optional[ISalary] = None
+
+class IJobPreview(BaseModel):
+    title: Optional[str] = None
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    job_type: Optional[str] = None
+    description: Optional[str] = None
+    responsibilities: Optional[List[str]] = None
+    requirements: Optional[List[str]] = None
+    salary: Optional[ISalary] = None
