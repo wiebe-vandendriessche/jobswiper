@@ -61,10 +61,12 @@ services:
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
       MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
       JOB_MANAGEMENT_SERVICE_URL: "http://job_management_service:8000"
+      PAYMENT_SERVICE_URL: "http://payment_service:8000"
       THIS_SERVICE: "api_gateway"
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
       SWIPES_BUS: swipes
+      JOBS_BUS: job_update
     networks:
       - private-network
 
@@ -90,12 +92,16 @@ services:
     restart: always
     depends_on:
       - mysql_profiles # API Gateway depends on authentication service
+      - rabbitmq
     environment:
       DATABASE_SERVICE: mysql_profiles
       MYSQL_USER: user
       MYSQL_PASSWORD: user_password
       MYSQL_DB: profiles_db
       MYSQL_PORT: 3306
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      JOBSEEKER_BUS: jobseeker_updates
     networks:
       - private-network
 
@@ -149,6 +155,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    restart: always
     ports:
       - "5000:15672" # Management UI
     environment:
@@ -172,6 +179,14 @@ services:
       MYSQL_PASSWORD: user_password
       MYSQL_DB: jobs_db
       MYSQL_PORT: 3306
+    networks:
+      - private-network
+  
+  payment_service:
+    build:
+      context: ./payment_service
+      dockerfile: Dockerfile
+    restart: always
     networks:
       - private-network
 

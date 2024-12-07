@@ -1,10 +1,8 @@
 from typing import List, Optional
-import uuid
-from pydantic import BaseModel
+import json
 
 
 class Salary:
-
     def __init__(self, min: float = 0, max: float = 300000):
         self.min = min
         self.max = max
@@ -26,6 +24,10 @@ class Salary:
                 raise ValueError("maximum salary cannot be less than minimum salary.")
             self.max = max
 
+    def to_dict(self):
+        """Convert Salary to a dictionary."""
+        return {"min": self.min, "max": self.max}
+
     def __repr__(self):
         return f"Salary(min={self.min}$, max={self.max}$')"
 
@@ -39,7 +41,7 @@ class UserProfile:
         email: str,
         location: str,
         phone_number: Optional[str] = None,
-        id: Optional[int] = None,
+        id: Optional[str] = None,
     ):
         self.username = username
         self.first_name = first_name  # First name of the user
@@ -61,6 +63,18 @@ class UserProfile:
     def update_location(self, location: str):
         """Update the user's location."""
         self.location = location
+
+    def to_dict(self):
+        """Convert UserProfile to a dictionary."""
+        return {
+            "username": self.username,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "location": self.location,
+            "phone_number": self.phone_number,
+            "id": self.id,
+        }
 
     def __repr__(self):
         return f"UserProfile(first_name='{self.first_name}', last_name='{self.last_name}', email='{self.email}', location='{self.location}', phone_number='{self.phone_number}')"
@@ -98,11 +112,11 @@ class JobSeeker(UserProfile):
         self.interests = interests
 
     def update_interests(self, interests: List[str]):
-        """Add a new interests to the job seeker's profile."""
+        """Add new interests to the job seeker's profile."""
         self.interests = interests
 
     def update_qualifications(self, qualifications: List[str]):
-        """Add a new qualifications to the job seeker's profile."""
+        """Add new qualifications to the job seeker's profile."""
         self.qualifications = qualifications
 
     def update_availability(self, availability: str):
@@ -116,6 +130,23 @@ class JobSeeker(UserProfile):
     ):
         """Update the salary range using the Salary class's method."""
         self.salary.update_salary_range(min, max)
+
+    def to_dict(self):
+        """Convert JobSeeker to a dictionary."""
+        return {
+            **super().to_dict(),  # Include fields from UserProfile
+            "interests": self.interests,
+            "qualifications": self.qualifications,
+            "education_level": self.education_level,
+            "years_of_experience": self.years_of_experience,
+            "availability": self.availability,
+            "salary": self.salary.to_dict(),  # Convert Salary object to dictionary
+            "date_of_birth": self.date_of_birth,
+        }
+
+    def to_json(self):
+        """Convert JobSeeker to JSON."""
+        return json.dumps(self.to_dict())
 
     def __repr__(self):
         return (
@@ -136,7 +167,7 @@ class Recruiter(UserProfile):
         location: str,
         company_name: str,
         phone_number: Optional[str] = None,
-        id: Optional[int] = None,
+        id: Optional[str] = None,
     ):
         # Initialize parent class with common attributes
         super().__init__(

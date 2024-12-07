@@ -12,6 +12,7 @@ class ISalary(BaseModel):
 
 
 class IJob(BaseModel):
+    id: str
     title: str
     company_name: str
     location: str
@@ -23,7 +24,7 @@ class IJob(BaseModel):
     posted_by: str
     posted_by_uuid: Optional[str] = None
     date_posted: Optional[str] = None
-    id: Optional[str] = None  # Optional as it might be assigned by the system
+    payment: Optional[int] = 1
 
 
 class JobUpdateRequest(BaseModel):  # Web API object only --> not included in domain model
@@ -34,3 +35,4 @@ class JobUpdateRequest(BaseModel):  # Web API object only --> not included in do
     responsibilities: Optional[str] = None
     requirements: Optional[str] = None
     salary: Optional[ISalary] = None
+

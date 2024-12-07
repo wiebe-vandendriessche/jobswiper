@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import date
+import uuid
 
 from sqlalchemy import Uuid
 
@@ -58,7 +59,7 @@ class Job:
         self.posted_by= posted_by
         self.posted_by_uuid= posted_by_uuid
         self.date_posted = date.today().isoformat()  # Date job was posted
-        self.id = id  # Unique identifier for the job (optional)
+        self.id = id or str(uuid.uuid4())  # Unique identifier for the job (optional)
 
     def update_job_details(
         self,

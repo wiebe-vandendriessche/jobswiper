@@ -66,7 +66,6 @@ class JobSeekerRepository(IJobSeekerRepository):
     async def find_by_username(self, username: str) -> Optional[JobSeeker]:
         with self.get_db() as db:
             job_seeker = (
-
                 db.query(JobSeekerModel)
                 .filter(JobSeekerModel.username == username)
                 .first()
@@ -131,6 +130,26 @@ class RecruiterRepository(IRecruiterRepository):
             recruiter = (
                 db.query(RecruiterModel)
                 .filter(RecruiterModel.username == username)
+                .first()
+            )
+            if recruiter:
+                return Recruiter(
+                    username=recruiter.username,
+                    first_name=recruiter.first_name,
+                    last_name=recruiter.last_name,
+                    email=recruiter.email,
+                    location=recruiter.location,
+                    phone_number=recruiter.phone_number,
+                    company_name=recruiter.company_name,
+                    id=recruiter.id,
+                )
+            return None
+    
+    async def find_by_uuid(self, uuid: str) -> Optional[Recruiter]:
+        with self.get_db() as db:
+            recruiter = (
+                db.query(RecruiterModel)
+                .filter(RecruiterModel.id == uuid)
                 .first()
             )
             if recruiter:

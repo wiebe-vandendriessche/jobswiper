@@ -4,3 +4,4 @@ mysql-connector-python
 sqlalchemy
 pydantic
 python-dotenv
+aio_pika
