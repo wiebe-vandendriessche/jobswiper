@@ -213,12 +213,70 @@ services:
     networks:
       - private-network
 
+
+  recommendation:
+    build:
+      context: ./recommendation_service
+    container_name: recommendation
+
+    depends_on:
+      - elasticsearch
+      - mysql_matching
+    environment:
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=elastic
+      - BUS_USERNAME=guest
+      - BUS_PASSWORD=guest
+      - BUS_SERVICE=rabbitmq
+      - BUS_PORT=5672
+      - MYSQL_DATABASE=matching_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=user_password
+      - MYSQL_HOST=mysql_matching
+    networks:
+      - private-network
+
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - ELASTIC_PASSWORD=elastic  # Set password for the default elastic user
+      - xpack.security.http.ssl.enabled=false
+    ports:
+      - "9300:9300"  # Transport port 9300, not exposing API port 9200
+    volumes:
+      - esdata:/usr/share/elasticsearch/data  # Persist Elasticsearch data
+    networks:
+      - private-network
+
+
+  test_api:
+    build:
+      context: ./recommendation_service/test_api  # Directory where your test API code is located
+    container_name: test_api
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    ports:
+      - "9000:9000"  # Port mapping for the test API
+    networks:
+      - private-network
+
+
 volumes:
   msql_profiles_data:
   msql_auth_data:
   msql_matching_data:
   rabbitmq_data:
   msql_jobs_data:
+  esdata:
 
 networks:
   private-network:

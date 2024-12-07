@@ -1,0 +1,13 @@
+FROM python:3.9
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the current directory contents into the container
+COPY . .
+
+# Install only the required dependencies (pika for RabbitMQ)
+RUN pip install --no-cache-dir uvicorn pika fastapi
+
+# Set the command to run the Python receiver script
+CMD ["uvicorn", "test_api:app", "--host", "0.0.0.0", "--port", "9000"]

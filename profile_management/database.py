@@ -85,7 +85,7 @@ class JobSeekerRepository(IJobSeekerRepository):
                     salary=Salary(job_seeker.salary_min, job_seeker.salary_max),
                     interests=job_seeker.interests,
                     qualifications=job_seeker.qualifications,
-                    date_of_birth=job_seeker.date_of_birth,
+                    date_of_birth=str(job_seeker.date_of_birth),
                 )
             return None
 

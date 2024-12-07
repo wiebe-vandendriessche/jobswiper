@@ -91,7 +91,7 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
                 user_likes=rec.user_likes,
                 recruiter_likes=rec.recruiter_likes,
             )
-            db.add(new_record)
+            db.merge(new_record)
             db.commit()
 
     async def delete(self, rec: Recommendation) -> None:
