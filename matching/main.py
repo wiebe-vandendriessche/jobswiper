@@ -54,7 +54,7 @@ async def get_user_recommendations(user_id: str):
 @app.get("/recommendations/job/{job_id}")
 async def get_job_recommendations(job_id: str):
     try:
-        lijst = await matchmaking_repo.find_list_of_recommended_jobs(job_id)
+        lijst = await matchmaking_repo.find_list_of_recommended_users(job_id)
         return lijst
     except Exception as e:
         return HTTPException(501, detail=f"{e}")
