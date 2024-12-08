@@ -261,6 +261,12 @@ services:
       - cluster.name=docker-cluster
       - ELASTIC_PASSWORD=elastic  # Set password for the default elastic user
       - xpack.security.http.ssl.enabled=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     ports:
       - "9300:9300"  # Transport port 9300, not exposing API port 9200
     volumes:
