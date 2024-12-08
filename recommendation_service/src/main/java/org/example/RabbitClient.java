@@ -56,7 +56,10 @@ public class RabbitClient {
         elasticDB.insertJobSeeker(jobseeker);
 
         List<Match> matches =  elasticDB.matchJobSeekerWithJobs(jobseeker);
-        matchingDB.insertUserJobMapping(matches);
+
+        if (matches != null && !matches.isEmpty()) {
+            matchingDB.insertUserJobMapping(matches);
+        }
 
 
 
@@ -78,7 +81,10 @@ public class RabbitClient {
         elasticDB.insertJob(job);
 
         List<Match> matches =  elasticDB.matchJobWithJobSeekers(job);
-        matchingDB.insertUserJobMapping(matches);
+
+        if (matches != null && !matches.isEmpty()) {
+            matchingDB.insertUserJobMapping(matches);
+        }
     }
 
 
