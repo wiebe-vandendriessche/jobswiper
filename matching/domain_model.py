@@ -27,7 +27,7 @@ class Recommendation:
         return self.user_likes and self.recruiter_likes
 
     def isFinishedRecommending(self) -> bool:
-        if self.user_likes is not None and self.recruiter_likes is not None:
+        if self.user_likes and self.recruiter_likes:
             return True
         else:
             return False
