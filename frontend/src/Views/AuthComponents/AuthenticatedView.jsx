@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import ProfileCreate from './ProfileCreate';
 import ProfileUpdate from './ProfileUpdate';
 import JobDashboard from './JobDashboard';
+import { useContext } from 'react';
+import { AuthContext } from './../AuthContext';
 
 //const apiBaseUrl = "http://api_gateway:8080";
 const apiBaseUrl = "http://localhost:8081";
@@ -11,6 +13,9 @@ const AuthenticatedView = ({ userData, onLogout}) => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  // context for full application
+  const { authData, setAuthData } = useContext(AuthContext);
+
 
   const fetchProfile = async () => {
     try {
@@ -26,6 +31,13 @@ const AuthenticatedView = ({ userData, onLogout}) => {
       if (response.status === 200) {
         const data = await response.json();
         setProfile(data); // update profile in component state
+        setAuthData({
+          selected_user_id: data.id,
+          selected_profile_name: data.username,
+          userType: data.company_name ? 'recruiter' : 'jobseeker',
+          selected_job_id: null,
+          selected_job_name: "",
+        });
       } else if (response.status === 404) {
         const errorData = await response.json();
         console.warn('Profile not found:', errorData.detail.detail);
@@ -36,6 +48,11 @@ const AuthenticatedView = ({ userData, onLogout}) => {
     } catch (error) {
       console.error('Error fetching profile:', error);
       setHasError(true);
+      setAuthData({
+        selected_user_id: '',
+        userType: '',
+        selected_job_id: null,
+      });
     } finally {
       setIsLoading(false);
     }

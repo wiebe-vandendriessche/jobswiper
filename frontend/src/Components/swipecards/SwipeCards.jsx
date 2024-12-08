@@ -2,9 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import TinderCard from 'react-tinder-card';
 import SwipeButton from './../swipebutton/SwipeButton';
 import './swipecards.css';
-
+import { useContext } from 'react';
+import { AuthContext } from '../../Views/AuthContext';
 
 function SwipeCards(props) {
+    // Get the authData from the context
+    const { authData, setAuthData } = useContext(AuthContext);
+
     const [people, setPeople] = useState([
         {
             name: "Elon Musk",
@@ -53,39 +57,61 @@ function SwipeCards(props) {
         setIsSwiping(false); // Reset swiping state
     };
 
+    // Check if authData is complete
+    const isContextComplete =
+        authData.userType &&
+        authData.selected_profile_name &&
+        (authData.userType === "jobseeker" || (authData.userType === "recruiter" && authData.selected_job_id));
+
+
     return (
         <>
-            <div className="swipeCards">
-                <div className="swipeCards__cardContainer">
-                    {people.map((person, index) => (
-                        <TinderCard
-                            ref={(el) => (childRefs.current[index] = el)}
-                            key={person.name}
-                            className="swipe"
-                            preventSwipe={["up", "down"]}
-                            onSwipe={(dir) => swiped(dir, person.name)}
-                            onCardLeftScreen={() => outOfFrame(person.name)}
-                        >
-                            <div
-                                style={{ backgroundImage: `url(${person.url})` }}
-                                className="card"
-                            >
-                                <h3>{person.name}</h3>
-                            </div>
-                        </TinderCard>
-                    ))}
-                </div>
-            </div>
-            {lastDirection ? (
-                <h2 className="infoText">You swiped {lastDirection}</h2>
+            {isContextComplete ? (
+                <>
+                    <div className="swipeCards__contextInfo">
+                        <div>
+                            Swiping for {authData.userType}: {authData.selected_profile_name}{" "}
+                            {authData.userType === "recruiter" && authData.selected_job_id && (
+                                <span>on job: {authData.selected_job_name}</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="swipeCards">
+                        <div className="swipeCards__cardContainer">
+                            {people.map((person, index) => (
+                                <TinderCard
+                                    ref={(el) => (childRefs.current[index] = el)}
+                                    key={person.name}
+                                    className="swipe"
+                                    preventSwipe={["up", "down"]}
+                                    onSwipe={(dir) => swiped(dir, person.name)}
+                                    onCardLeftScreen={() => outOfFrame(person.name)}
+                                >
+                                    <div
+                                        style={{ backgroundImage: `url(${person.url})` }}
+                                        className="card"
+                                    >
+                                        <h3>{person.name}</h3>
+                                    </div>
+                                </TinderCard>
+                            ))}
+                        </div>
+                    </div>
+                    {lastDirection ? (
+                        <h2 className="infoText">You swiped {lastDirection}</h2>
+                    ) : (
+                        <h2 className="infoText" />
+                    )}
+                    <SwipeButton
+                        onSwipeLeft={() => swipe('left')}
+                        onSwipeRight={() => swipe('right')}
+                    />
+                </>
             ) : (
-                <h2 className="infoText" />
+                <div className="placeholder">
+                    <h2>Please log in as a jobseeker or recruiter with a selected job to view cards.</h2>
+                </div>
             )}
-            {/* Pass swipe actions as props to SwipeButton */}
-            <SwipeButton
-                onSwipeLeft={() => swipe('left')}
-                onSwipeRight={() => swipe('right')}
-            />
         </>
     );
 }

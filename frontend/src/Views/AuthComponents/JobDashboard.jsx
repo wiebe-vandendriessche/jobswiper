@@ -1,9 +1,14 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useContext } from "react";
+import { AuthContext } from "./../AuthContext";
 
 const apiBaseUrl = "http://localhost:8081";
 
 const JobDashboard = ({ profile, username }) => {
+    // context
+    const { authData, setAuthData } = useContext(AuthContext);
+
     const [jobs, setJobs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -29,10 +34,6 @@ const JobDashboard = ({ profile, username }) => {
         fetchJobs();
     }, []);
 
-    useEffect(() => {
-        console.log("Jobs:", jobs);
-    }, [jobs]);
-
     // Fetch all jobs for the recruiter
     const fetchJobs = async () => {
         setIsLoading(true);
@@ -48,8 +49,14 @@ const JobDashboard = ({ profile, username }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                setJobs(data); // Only update state if the data is successfully fetched
-                setError(null); // Clear any previous errors
+                // Convert responsibilities and requirements back to comma-separated strings for display
+                const updatedData = data.map((job) => ({
+                    ...job,
+                    responsibilities: job.responsibilities.join(", "),
+                    requirements: job.requirements.join(", "),
+                }));
+                setJobs(updatedData);
+                setError(null);
             } else {
                 throw new Error("Failed to fetch jobs");
             }
@@ -72,9 +79,10 @@ const JobDashboard = ({ profile, username }) => {
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    id: "0",
+                    id: "",
                     ...newJob,
-                    posted_by: username,
+                    responsibilities: newJob.responsibilities.split(",").map((r) => r.trim()),
+                    requirements: newJob.requirements.split(",").map((r) => r.trim()),
                 }),
             });
 
@@ -112,13 +120,9 @@ const JobDashboard = ({ profile, username }) => {
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    title: selectedJob.title,
-                    location: selectedJob.location,
-                    job_type: selectedJob.job_type,
-                    description: selectedJob.description,
-                    responsibilities: selectedJob.responsibilities,
-                    requirements: selectedJob.requirements,
-                    salary: selectedJob.salary,
+                    ...selectedJob,
+                    responsibilities: selectedJob.responsibilities.split(",").map((r) => r.trim()),
+                    requirements: selectedJob.requirements.split(",").map((r) => r.trim()),
                 }),
             });
 
@@ -139,6 +143,11 @@ const JobDashboard = ({ profile, username }) => {
     // Handle clicking a job to edit it
     const handleJobClick = (job) => {
         setSelectedJob(job); // Set the selected job for updating
+        setAuthData({
+            ...authData,
+            selected_job_id: job.id,
+            selected_job_name: job.title,
+        });
         setShowCreateForm(false); // Close the create form when updating a job
     };
 
@@ -239,7 +248,7 @@ const JobDashboard = ({ profile, username }) => {
                             <textarea
                                 id="responsibilities"
                                 name="responsibilities"
-                                placeholder="Responsibilities"
+                                placeholder="Responsibilities (comma-separated)"
                                 value={newJob.responsibilities}
                                 onChange={handleJobChange}
                             />
@@ -249,7 +258,7 @@ const JobDashboard = ({ profile, username }) => {
                             <textarea
                                 id="requirements"
                                 name="requirements"
-                                placeholder="Requirements"
+                                placeholder="Requirements (comma-separated)"
                                 value={newJob.requirements}
                                 onChange={handleJobChange}
                             />
