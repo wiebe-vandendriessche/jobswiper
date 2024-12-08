@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import List, Optional, cast
 from database import Base, engine, MySQL_MatchMakingRepo, SessionLocal
 from application_layer import MatchMakingService
-from rabbit import PikaConsumer
+from rabbit import PikaConsumer, PikaPublisher
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -22,8 +22,12 @@ Base.metadata.create_all(bind=engine)
 matchmaking_repo: IMatchMakingRepository = MySQL_MatchMakingRepo(
     sessionmaker=SessionLocal
 )
-
-matchmaking_service = MatchMakingService(matchmaking_repo)
+publisher = PikaPublisher(
+    host=os.getenv("BUS_SERVICE"),
+    port=int(os.getenv("BUS_PORT", 5672)),
+    queue_name=os.getenv("MATCH_BUS"),
+)
+matchmaking_service = MatchMakingService(matchmaking_repo, publisher)
 
 
 # ------------------------------------------SETUP CONSUMER ASYNCHRONOUSLY--------------------
@@ -38,6 +42,8 @@ async def startup():
     )
     task = loop.create_task(consumer.consume(loop))
     await task
+
+    await publisher.initialize()
 
 
 # --------------------------------------- THESE ENDPOINT CAN BYPASS APPLICATION LAYER AND GO STRAIGHT TO DATABASE AS THE SERVICE WOULD ADD NO VALUE------------------------------------------------------
@@ -54,7 +60,7 @@ async def get_user_recommendations(user_id: str):
 @app.get("/recommendations/job/{job_id}")
 async def get_job_recommendations(job_id: str):
     try:
-        lijst = await matchmaking_repo.find_list_of_recommended_jobs(job_id)
+        lijst = await matchmaking_repo.find_list_of_recommended_users(job_id)
         return lijst
     except Exception as e:
         return HTTPException(501, detail=f"{e}")

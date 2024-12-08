@@ -14,6 +14,10 @@ class IJobSeekerRepository(ABC):
     async def find_by_username(self, username: str) -> JobSeeker:
         pass
 
+    @abstractmethod
+    async def find_by_uuid(self, uuid: str) -> Optional[JobSeeker]:
+        pass
+
 
 class IRecruiterRepository(ABC):
     @abstractmethod
@@ -23,7 +27,7 @@ class IRecruiterRepository(ABC):
     @abstractmethod
     async def find_by_username(self, username: str) -> Optional[Recruiter]:
         pass
-    
+
     @abstractmethod
     async def find_by_uuid(self, uuid: str) -> Optional[Recruiter]:
         pass

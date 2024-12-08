@@ -12,7 +12,7 @@ from main import verify_token_get_user
 
 Matches_router = APIRouter(prefix="/matches", tags=["matches"])
 
-MATCHING_SERVICE_URL = os.getenv("MATCHING_MANAGEMENT_SERVICE_URL")
+MATCHING_SERVICE_URL = os.getenv("MATCHING_SERVICE_URL")
 
 
 @Matches_router.get("/recommendations/user/{user_id}")
@@ -39,7 +39,9 @@ async def user_recommendations(
         )
     except httpx.HTTPStatusError as http_err:
         # If there's an HTTP error (4xx/5xx), propagate it as a FastAPI HTTPException
-        raise HTTPException(status_code=response.status_code, detail=str(http_err))
+        raise HTTPException(
+            status_code=http_err.response.status_code, detail=http_err.response.json()
+        )
     except httpx.RequestError as req_err:
         # For other request errors (e.g., network issues), raise a 500 error
         raise HTTPException(status_code=500, detail=f"Request error: {req_err}")
@@ -67,7 +69,9 @@ async def job_recommendations(
         )
     except httpx.HTTPStatusError as http_err:
         # If there's an HTTP error (4xx/5xx), propagate it as a FastAPI HTTPException
-        raise HTTPException(status_code=response.status_code, detail=str(http_err))
+        raise HTTPException(
+            status_code=http_err.response.status_code, detail=http_err.response.json()
+        )
     except httpx.RequestError as req_err:
         # For other request errors (e.g., network issues), raise a 500 error
         raise HTTPException(status_code=500, detail=f"Request error: {req_err}")

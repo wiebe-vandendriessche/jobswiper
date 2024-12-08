@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class ISwipe(BaseModel):
     user_id: str
     job_id: str
+    recruiter_id: str
     decision: bool
 
 

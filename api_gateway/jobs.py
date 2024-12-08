@@ -164,7 +164,33 @@ async def get_all_jobs(
             detail=f"An unexpected error occurred while fetching jobs: {exc}",
         )
 
+@Jobs_router.get("/{job_id}/preview", response_model=IJobPreview)
+async def job_get_preview(
+    job_id: str,
+    user: Annotated[dict, Depends(verify_token_get_user)],
+):
+    """
+    Fetch a preview of a job posting by job ID.
+    """
 
+    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}/preview"
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
+        return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.json(),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while fetching the job: {exc}",
+        )
 
 @Jobs_router.get("/{job_id}", response_model=IJob)
 async def job_get(
@@ -201,33 +227,7 @@ async def job_get(
         )
 
 
-@Jobs_router.get("/{job_id}/preview", response_model=IJobPreview)
-async def job_get_preview(
-    job_id: str,
-    user: Annotated[dict, Depends(verify_token_get_user)],
-):
-    """
-    Fetch a preview of a job posting by job ID.
-    """
 
-    url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}/preview"
-    try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
-        return response.json()
-    except CircuitBreakerError:
-        raise HTTPException(
-            status_code=503, detail="Service unavailable (circuit open)"
-        )
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(
-            status_code=exc.response.status_code,
-            detail=exc.response.json(),
-        )
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An unexpected error occurred while fetching the job: {exc}",
-        )
 
 @Jobs_router.put("/{job_id}")
 async def job_update(

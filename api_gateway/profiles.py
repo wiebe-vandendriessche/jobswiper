@@ -7,7 +7,7 @@ from circuitbreaker import CircuitBreakerError
 
 from retry_circuit_breaker import fetch_data_with_circuit_breaker
 from caching import cache_profile, get_profile, remove_profile_cache
-from rest_interfaces.profile_interfaces import IJobSeeker, IRecruiter, IUserProfile, JobSeekerUpdateRequest, RecruiterUpdateRequest
+from rest_interfaces.profile_interfaces import IJobSeeker, IRecruiter, IUserProfile, JobSeekerUpdateRequest, JobseekerPreview, RecruiterUpdateRequest
 from main import verify_token_get_user
 
 
@@ -56,6 +56,36 @@ async def profile_create(
         raise HTTPException(
             status_code=500, detail=f"Internal server error: {str(exc)}"
         )
+@Profile_router.get("/{user_id}/preview",response_model=JobseekerPreview)
+async def profile_get_preview(
+    user_id:str,
+    user: Annotated[dict, Depends(verify_token_get_user)]
+):
+    """
+    Get the details of a job seeker account by uuid.
+    - userid: The uuid of the account to fetch.
+    All users can get preview of other jobseeker if logged in.
+    """
+    url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts/{user_id}/preview"
+    try:
+        response = await fetch_data_with_circuit_breaker("GET",url)
+        return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as exc:
+        # Raise an HTTPException with the same status code and error details
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.json()
+        )
+    except Exception as exc:
+        # Handle non-HTTP exceptions
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {exc}"
+        )
 
 @Profile_router.get("/{username}",response_model=Union[IJobSeeker,IRecruiter])
 async def profile_get(
@@ -86,7 +116,7 @@ async def profile_get(
         # Raise an HTTPException with the same status code and error details
         raise HTTPException(
             status_code=exc.response.status_code,
-            detail=exc.response
+            detail=exc.response.json()
         )
     except Exception as exc:
         # Handle non-HTTP exceptions

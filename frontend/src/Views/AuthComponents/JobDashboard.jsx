@@ -1,378 +1,357 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { Box, Button, Paper, Typography, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { AuthContext } from "./../AuthContext";
 
 const apiBaseUrl = "http://localhost:8081";
 
 const JobDashboard = ({ profile, username }) => {
-    const [jobs, setJobs] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showCreateForm, setShowCreateForm] = useState(false);
-    const [newJob, setNewJob] = useState({
-        title: "",
-        company_name: "",
-        location: "",
-        job_type: "",
-        description: "",
-        responsibilities: "",
-        requirements: "",
-        salary: { min: 0, max: 300000 },
+  const { authData, setAuthData } = useContext(AuthContext);
+
+  const [jobs, setJobs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newJob, setNewJob] = useState({
+    title: "",
+    company_name: "",
+    location: "",
+    job_type: "",
+    description: "",
+    responsibilities: "",
+    requirements: "",
+    salary: { min: 0, max: 300000 },
+  });
+
+  const [swipedJob, setSwipedJob] = useState(null); // Job selected for swiping
+  const [updateJob, setUpdateJob] = useState(null); // Job selected for update
+
+  useEffect(() => {
+    setAuthData({
+      ...authData,
+      selected_job_id: swipedJob?.id,
+      selected_job_name: swipedJob?.title,
     });
-    const [selectedJob, setSelectedJob] = useState(null);
+  }, [swipedJob]);
 
-    // Function to get the JWT token from localStorage
-    const getJwtToken = () => {
-        return localStorage.getItem("jwtToken");
-    };
+  const getJwtToken = () => {
+    return localStorage.getItem("jwtToken");
+  };
 
-    useEffect(() => {
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    setIsLoading(true);
+    const token = getJwtToken();
+    try {
+      const response = await fetch(`${apiBaseUrl}/jobs/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const updatedData = data.map((job) => ({
+          ...job,
+          responsibilities: job.responsibilities.join(", "),
+          requirements: job.requirements.join(", "),
+        }));
+        setJobs(updatedData);
+        setError(null);
+      } else {
+        throw new Error("Failed to fetch jobs");
+      }
+    } catch (err) {
+      setError("Error fetching jobs: " + err.message);
+      console.error("Error fetching jobs:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateJob = async () => {
+    const token = getJwtToken();
+    try {
+      const response = await fetch(`${apiBaseUrl}/jobs/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: "",
+          ...newJob,
+          responsibilities: newJob.responsibilities.split(",").map((r) => r.trim()),
+          requirements: newJob.requirements.split(",").map((r) => r.trim()),
+        }),
+      });
+
+      if (response.ok) {
+        const createdJob = await response.json();
+        setJobs([...jobs, createdJob]);
+        setShowCreateForm(false);
+        setNewJob({
+          title: "",
+          company_name: "",
+          location: "",
+          job_type: "",
+          description: "",
+          responsibilities: "",
+          requirements: "",
+          salary: { min: 0, max: 300000 },
+        });
         fetchJobs();
-    }, []);
+      } else {
+        console.error("Failed to create job");
+      }
+    } catch (err) {
+      console.error("Error creating job:", err);
+    }
+  };
 
-    useEffect(() => {
-        console.log("Jobs:", jobs);
-    }, [jobs]);
+  const handleUpdateJob = async () => {
+    const token = getJwtToken();
+    try {
+      const response = await fetch(`${apiBaseUrl}/jobs/${updateJob.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...updateJob,
+          responsibilities: updateJob.responsibilities.split(",").map((r) => r.trim()),
+          requirements: updateJob.requirements.split(",").map((r) => r.trim()),
+        }),
+      });
 
-    // Fetch all jobs for the recruiter
-    const fetchJobs = async () => {
-        setIsLoading(true);
-        const token = getJwtToken(); // Get token from localStorage
-        try {
-            const response = await fetch(`${apiBaseUrl}/jobs/`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+      if (response.ok) {
+        const updatedJob = await response.json();
+        setJobs(
+          jobs.map((job) => (job.id === updatedJob.id ? updatedJob : job))
+        );
+        setUpdateJob(null); // Close the update dialog
+        fetchJobs();
+      } else {
+        console.error("Failed to update job");
+      }
+    } catch (err) {
+      console.error("Error updating job:", err);
+    }
+  };
 
-            if (response.ok) {
-                const data = await response.json();
-                setJobs(data); // Only update state if the data is successfully fetched
-                setError(null); // Clear any previous errors
-            } else {
-                throw new Error("Failed to fetch jobs");
-            }
-        } catch (err) {
-            setError("Error fetching jobs: " + err.message); // Set error state
-            console.error("Error fetching jobs:", err);
-        } finally {
-            setIsLoading(false); // Set loading state to false after data fetching
-        }
-    };
+  const handleJobClick = (job) => {
+    // This will highlight the job in green for swiping
+    setSwipedJob(job);
+  };
 
-    // Create a new job
-    const handleCreateJob = async () => {
-        const token = getJwtToken(); // Get token from localStorage
-        try {
-            const response = await fetch(`${apiBaseUrl}/jobs/`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    id: "0",
-                    ...newJob,
-                    posted_by: username,
-                }),
-            });
+  const handleJobChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateJob({
+      ...updateJob,
+      [name]: value,
+    });
+  };
 
-            if (response.ok) {
-                const createdJob = await response.json();
-                setJobs([...jobs, createdJob]); // Add the newly created job to the list
-                setShowCreateForm(false); // Close the form
-                setNewJob({
-                    title: "",
-                    company_name: "",
-                    location: "",
-                    job_type: "",
-                    description: "",
-                    responsibilities: "",
-                    requirements: "",
-                    salary: { min: null, max: null },
-                });
-                fetchJobs(); // Fetch jobs again to update the list
-            } else {
-                console.error("Failed to create job");
-            }
-        } catch (err) {
-            console.error("Error creating job:", err);
-        }
-    };
+  return (
+    <Box component={Paper} sx={{ padding: 3, marginTop: 2 }}>
+      <Typography variant="h5">Job Dashboard</Typography>
 
-    // Update an existing job
-    const handleUpdateJob = async () => {
-        const token = getJwtToken(); // Get token from localStorage
-        try {
-            const response = await fetch(`${apiBaseUrl}/jobs/${selectedJob.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    title: selectedJob.title,
-                    location: selectedJob.location,
-                    job_type: selectedJob.job_type,
-                    description: selectedJob.description,
-                    responsibilities: selectedJob.responsibilities,
-                    requirements: selectedJob.requirements,
-                    salary: selectedJob.salary,
-                }),
-            });
+      {/* Button to create a new job */}
+      <Button
+        variant="contained"
+        color="primary"
+        sx={{ marginBottom: 3 }}
+        onClick={() => {
+          setShowCreateForm(true);
+        }}
+      >
+        Create Job
+      </Button>
 
-            if (response.ok) {
-                const updatedJob = await response.json();
-                setJobs(
-                    jobs.map((job) => (job.id === updatedJob.id ? updatedJob : job))
-                );
-                setSelectedJob(null); // Close update form
-            } else {
-                console.error("Failed to update job");
-            }
-        } catch (err) {
-            console.error("Error updating job:", err);
-        }
-    };
+      {isLoading ? (
+        <Typography>Loading jobs...</Typography>
+      ) : error ? (
+        <Typography>{error}</Typography>
+      ) : (
+        <Box>
+          <Typography variant="h6">Jobs</Typography>
+          {jobs.length === 0 ? (
+            <Typography>No jobs available.</Typography>
+          ) : (
+            <Box>
+              {jobs.map((job) => (
+                <Paper
+                  key={job.id}
+                  sx={{
+                    padding: 2,
+                    marginBottom: 2,
+                    backgroundColor: swipedJob?.id === job.id ? "lightgreen" : "white",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleJobClick(job)} // Select for swiping (highlight green)
+                >
+                  <Typography variant="h6">{job.title}</Typography>
+                  <Typography>{job.company_name}</Typography>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    sx={{ marginTop: 1 }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent closing dialog on button click
+                      setUpdateJob(job); // Open update dialog
+                    }}
+                  >
+                    Update
+                  </Button>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
 
-    // Handle clicking a job to edit it
-    const handleJobClick = (job) => {
-        setSelectedJob(job); // Set the selected job for updating
-        setShowCreateForm(false); // Close the create form when updating a job
-    };
+      {/* Create Job Dialog */}
+      <Dialog open={showCreateForm} onClose={() => setShowCreateForm(false)}>
+        <DialogTitle>Create Job</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Job Title"
+            fullWidth
+            variant="outlined"
+            value={newJob.title}
+            onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Company Name"
+            fullWidth
+            variant="outlined"
+            value={newJob.company_name}
+            onChange={(e) => setNewJob({ ...newJob, company_name: e.target.value })}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Location"
+            fullWidth
+            variant="outlined"
+            value={newJob.location}
+            onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Job Type"
+            fullWidth
+            variant="outlined"
+            value={newJob.job_type}
+            onChange={(e) => setNewJob({ ...newJob, job_type: e.target.value })}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Description"
+            fullWidth
+            variant="outlined"
+            value={newJob.description}
+            onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Responsibilities"
+            fullWidth
+            variant="outlined"
+            value={newJob.responsibilities}
+            onChange={(e) => setNewJob({ ...newJob, responsibilities: e.target.value })}
+            helperText="Comma-separated values"
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Requirements"
+            fullWidth
+            variant="outlined"
+            value={newJob.requirements}
+            onChange={(e) => setNewJob({ ...newJob, requirements: e.target.value })}
+            helperText="Comma-separated values"
+            sx={{ marginBottom: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCreateForm(false)}>Cancel</Button>
+          <Button onClick={handleCreateJob}>Create Job</Button>
+        </DialogActions>
+      </Dialog>
 
-    // Handle form changes for creating or updating a job
-    const handleJobChange = (e) => {
-        const { name, value } = e.target;
-        if (selectedJob) {
-            setSelectedJob({
-                ...selectedJob,
-                [name]: value,
-            });
-        } else {
-            setNewJob({
-                ...newJob,
-                [name]: value,
-            });
-        }
-    };
-
-    // Close the update form
-    const handleCloseUpdateForm = () => {
-        setSelectedJob(null); // Close the update form
-    };
-
-
-    return (
-        <div>
-            <h1>Job Dashboard</h1>
-            <button
-                onClick={() => {
-                    setShowCreateForm(!showCreateForm);
-                    setSelectedJob(null); // Close the update form when creating a new job
-                }}
-            >
-                {showCreateForm ? "Cancel" : "Create Job"}
-            </button>
-
-            {showCreateForm && (
-                <div>
-                    <h2>Create Job</h2>
-                    <form onSubmit={(e) => e.preventDefault()}>
-                        <div>
-                            <label htmlFor="title">Job Title</label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                placeholder="Job Title"
-                                value={newJob.title}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="company_name">Company Name</label>
-                            <input
-                                type="text"
-                                id="company_name"
-                                name="company_name"
-                                placeholder="Company Name"
-                                value={newJob.company_name}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="location">Location</label>
-                            <input
-                                type="text"
-                                id="location"
-                                name="location"
-                                placeholder="Location"
-                                value={newJob.location}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="job_type">Job Type</label>
-                            <input
-                                type="text"
-                                id="job_type"
-                                name="job_type"
-                                placeholder="Job Type"
-                                value={newJob.job_type}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="description">Description</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                placeholder="Description"
-                                value={newJob.description}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="responsibilities">Responsibilities</label>
-                            <textarea
-                                id="responsibilities"
-                                name="responsibilities"
-                                placeholder="Responsibilities"
-                                value={newJob.responsibilities}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="requirements">Requirements</label>
-                            <textarea
-                                id="requirements"
-                                name="requirements"
-                                placeholder="Requirements"
-                                value={newJob.requirements}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="salary">Salary (min, max)</label>
-                            <input
-                                type="text"
-                                id="salary"
-                                name="salary"
-                                value={JSON.stringify(newJob.salary)}  // Convert salary object to JSON string for display
-                                onChange={handleJobChange}  // Handle JSON input change
-                                placeholder='{"min": 0, "max": 300000}'  // Provide example of JSON format
-                            />
-                        </div>
-                        <button type="button" onClick={handleCreateJob}>
-                            Create Job
-                        </button>
-                    </form>
-                </div>
-            )}
-
-            {isLoading ? (
-                <div>Loading jobs...</div>
-            ) : error ? (
-                <div>{error}</div>
-            ) : (
-                <div>
-                    <h2>Jobs</h2>
-                    <ul>
-                        {jobs.length === 0 ? (
-                            <li>No jobs available.</li>
-                        ) : (
-                            jobs.map((job) => (
-                                <li key={job.id}>
-                                    <h3 onClick={() => handleJobClick(job)}>{job.title}</h3>
-                                </li>
-                            ))
-                        )}
-                    </ul>
-                </div>
-            )}
-
-            {selectedJob && (
-                <div>
-                    <h2>Update Job</h2>
-                    <button onClick={handleCloseUpdateForm}>Close Update</button>
-                    <form onSubmit={(e) => e.preventDefault()}>
-                        <div>
-                            <label htmlFor="title">Job Title</label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value={selectedJob.title}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="location">Location</label>
-                            <input
-                                type="text"
-                                id="location"
-                                name="location"
-                                value={selectedJob.location}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="job_type">Job Type</label>
-                            <input
-                                type="text"
-                                id="job_type"
-                                name="job_type"
-                                value={selectedJob.job_type}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="description">Description</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                value={selectedJob.description}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="responsibilities">Responsibilities</label>
-                            <textarea
-                                id="responsibilities"
-                                name="responsibilities"
-                                value={selectedJob.responsibilities}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="requirements">Requirements</label>
-                            <textarea
-                                id="requirements"
-                                name="requirements"
-                                value={selectedJob.requirements}
-                                onChange={handleJobChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="salary">Salary (min, max)</label>
-                            <input
-                                type="text"
-                                id="salary"
-                                name="salary"
-                                value={JSON.stringify(selectedJob.salary)}  // Convert salary object to JSON string for display
-                                onChange={handleJobChange}  // Handle JSON input change
-                                placeholder='{"min": 0, "max": 300000}'  // Provide example of JSON format
-                            />
-                        </div>
-                        <button type="button" onClick={handleUpdateJob}>
-                            Update Job
-                        </button>
-                    </form>
-                </div>
-            )}
-        </div>
-    );
+      {/* Update Job Dialog */}
+      <Dialog open={Boolean(updateJob)} onClose={() => setUpdateJob(null)} >
+        <DialogTitle >Update Job</DialogTitle>
+        <DialogContent >
+          <TextField
+            label="Job Title"
+            fullWidth
+            variant="outlined"
+            value={updateJob?.title || ""}
+            name="title"
+            onChange={handleJobChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Location"
+            fullWidth
+            variant="outlined"
+            value={updateJob?.location || ""}
+            name="location"
+            onChange={handleJobChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Job Type"
+            fullWidth
+            variant="outlined"
+            value={updateJob?.job_type || ""}
+            name="job_type"
+            onChange={handleJobChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Description"
+            fullWidth
+            variant="outlined"
+            value={updateJob?.description || ""}
+            name="description"
+            onChange={handleJobChange}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Responsibilities"
+            fullWidth
+            variant="outlined"
+            value={updateJob?.responsibilities || ""}
+            name="responsibilities"
+            onChange={handleJobChange}
+            helperText="Comma-separated values"
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Requirements"
+            fullWidth
+            variant="outlined"
+            value={updateJob?.requirements || ""}
+            name="requirements"
+            onChange={handleJobChange}
+            helperText="Comma-separated values"
+            sx={{ marginBottom: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUpdateJob(null)}>Cancel</Button>
+          <Button onClick={handleUpdateJob}>Update Job</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
 };
+
 export default JobDashboard;

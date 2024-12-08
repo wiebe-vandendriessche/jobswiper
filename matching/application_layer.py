@@ -9,13 +9,10 @@ class MatchMakingService:
     def __init__(
         self,
         matchmaking_repo: IMatchMakingRepository,
-        # publisher: IMatchPublisher,
+        publisher: IMatchPublisher,
     ):
         self.repo = matchmaking_repo
-
-    # self.publisher = publisher
-
-    # self.publisher = publisher
+        self.publisher = publisher
 
     async def swiped_on_job(self, user_id: str, job_id: str, decision: bool):
         recom: Optional[Recommendation] = await self.repo.query(user_id, job_id)
@@ -37,8 +34,8 @@ class MatchMakingService:
         if (
             recom.isFinishedRecommending()
         ):  # we need to delete it because they both swiped
-            # if recom.isMatch():
-            # await self.publisher.found_match(recom)
+            if recom.isMatch():
+                await self.publisher.found_match(recom)
             await self.repo.delete(
                 recom
             )  # only do this after its posted on the bus, otherwise it might have deleted it before and then crashed while publishing it on the bus
