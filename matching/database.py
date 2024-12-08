@@ -27,6 +27,7 @@ class UserJobMapping(Base):
     job_id = Column(
         String(36), nullable=False, index=True, primary_key=True
     )  # because they are combined primary key they are index in a combined way, making them easy to uery as a pair
+    recruiter_id = Column(String(36), nullable=False)
     user_likes = Column(
         Boolean, nullable=True
     )  # True for "yes", False for "no", None for undecided
@@ -77,6 +78,7 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
                 return Recommendation(
                     user_id=result.user_id,
                     job_id=result.job_id,
+                    recruiter_id=result.recruiter_id,
                     user_likes=result.user_likes,
                     recruiter_likes=result.recruiter_likes,
                 )
@@ -88,6 +90,7 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
             new_record = UserJobMapping(
                 user_id=rec.user_id,
                 job_id=rec.job_id,
+                recruiter_id=rec.recuiter_id,
                 user_likes=rec.user_likes,
                 recruiter_likes=rec.recruiter_likes,
             )
@@ -100,6 +103,7 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
             record = UserJobMapping(
                 user_id=rec.user_id,
                 job_id=rec.job_id,
+                recruiter_id=rec.recuiter_id,
                 user_likes=rec.user_likes,
                 recruiter_likes=rec.recruiter_likes,
             )

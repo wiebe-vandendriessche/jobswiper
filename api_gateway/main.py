@@ -206,3 +206,8 @@ app.include_router(Matches_router)
 from jobs import Jobs_router
 
 app.include_router(Jobs_router)
+
+# ------------------------------------------------- MESSAGING service---------------------------------------
+from messaging import Messaging_router
+
+app.include_router(Messaging_router)

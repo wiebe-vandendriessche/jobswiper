@@ -12,7 +12,7 @@ from main import verify_token_get_user
 
 Matches_router = APIRouter(prefix="/matches", tags=["matches"])
 
-MATCHING_SERVICE_URL = os.getenv("MATCHING_MANAGEMENT_SERVICE_URL")
+MATCHING_SERVICE_URL = os.getenv("MATCHING_SERVICE_URL")
 
 
 @Matches_router.get("/recommendations/user/{user_id}")

@@ -52,7 +52,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
-      - api_gateway 
+      - api_gateway
     networks:
       - private-network
 
@@ -60,8 +60,6 @@ services:
     build:
       context: ./api_gateway # Set up a new folder for API Gateway
       dockerfile: Dockerfile # Dockerfile for the API Gateway
-    ports:
-      - "0:8080" # dynamic ports for the replicas
     restart: always
     depends_on:
       - jwt_auth # API Gateway depends on authentication service
@@ -69,9 +67,10 @@ services:
     environment:
       AUTH_SERVICE_URL: "http://jwt_auth:8000" # URL of the authentication service
       PROFILE_MANAGEMENT_SERVICE_URL: "http://profile_management:8000"
-      MATCHING_MANAGEMENT_SERVICE_URL: "http://matching:8000"
+      MATCHING_SERVICE_URL: "http://matching:8000"
       JOB_MANAGEMENT_SERVICE_URL: "http://job_management_service:8000"
       PAYMENT_SERVICE_URL: "http://payment_service:8000"
+      MESSAGING_SERVICE_URL: "http://messaging:8000"
       THIS_SERVICE: "api_gateway"
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
@@ -166,6 +165,7 @@ services:
       BUS_SERVICE: rabbitmq
       BUS_PORT: 5672
       SWIPES_BUS: swipes
+      MATCH_BUS: matches
     networks:
       - private-network
 
@@ -188,8 +188,6 @@ services:
       context: ./job_service # Set up a new folder for API Gateway
       dockerfile: Dockerfile # Dockerfile for the API Gateway
     restart: always
-    ports:
-      - "4200:8000"
     depends_on:
       - mysql_jobs # API Gateway depends on authentication service
       - rabbitmq
@@ -213,12 +211,25 @@ services:
     networks:
       - private-network
 
+  messaging:
+    build:
+      context: ./messaging
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      BUS_SERVICE: rabbitmq
+      BUS_PORT: 5672
+      MATCH_BUS: matches
+    networks:
+      - private-network
+
 volumes:
   msql_profiles_data:
   msql_auth_data:
   msql_matching_data:
   rabbitmq_data:
   msql_jobs_data:
+
 
 networks:
   private-network:
