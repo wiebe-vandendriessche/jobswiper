@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import json
 from typing import Optional, List
 from unittest.mock import Base
 import uuid
@@ -31,11 +32,10 @@ class JobModel(Base):
     salary_min = Column(Float, nullable=False, default=0)
     salary_max = Column(Float, nullable=False, default=300000)
     company_name = Column(String(255), nullable=False)
-    posted_by = Column(String(50), nullable=False)
     posted_by_uuid = Column(String(36), nullable=False)  # UUID of recruiter -> secondary key
     date_posted = Column(Date, nullable=False)
-    responsibilities = Column(String(1000), nullable=True)  # Comma-separated list of responsibilities
-    requirements = Column(String(1000), nullable=True)  # Comma-separated list of requirements
+    responsibilities = Column(JSON, nullable=False, default=[])
+    requirements = Column(JSON, nullable=False, default=[])
 
 
 class JobRepository:
@@ -55,7 +55,24 @@ class JobRepository:
                     responsibilities=job.responsibilities,
                     requirements=job.requirements,
                     salary=Salary(job.salary_min, job.salary_max),
-                    posted_by=job.posted_by,
+                    posted_by_uuid=job.posted_by_uuid,
+                    id=job.id
+                )
+            return None
+        
+    async def find_by_id_preview(self, job_id: str) -> Optional[Job]:
+        with self.get_db() as db:
+            job = db.query(JobModel).filter(JobModel.id == job_id).first()
+            if job:
+                return Job(
+                    title=job.title,
+                    company_name=job.company_name,
+                    location=job.location,
+                    job_type=job.job_type,
+                    description=job.description,
+                    responsibilities=job.responsibilities,
+                    requirements=job.requirements,
+                    salary=Salary(job.salary_min, job.salary_max),
                     posted_by_uuid=job.posted_by_uuid,
                     id=job.id
                 )
@@ -74,7 +91,6 @@ class JobRepository:
                 requirements=job.requirements,
                 salary_min=job.salary.min,
                 salary_max=job.salary.max,
-                posted_by=job.posted_by,
                 posted_by_uuid=job.posted_by_uuid,
                 date_posted=job.date_posted
             )
@@ -112,7 +128,6 @@ class JobRepository:
                     responsibilities=job.responsibilities,
                     requirements=job.requirements,
                     salary=Salary(job.salary_min, job.salary_max),
-                    posted_by=job.posted_by,
                     posted_by_uuid=job.posted_by_uuid,
                 )
                 for job in jobs

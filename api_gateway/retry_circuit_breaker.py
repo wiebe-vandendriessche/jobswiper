@@ -1,31 +1,57 @@
-from fastapi import FastAPI, HTTPException, Request
+import logging
 from typing import Optional, Dict
+from fastapi import HTTPException
 import httpx
 from tenacity import (
+    after_log,
+    before_log,
     retry,
+    RetryError,
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
+    wait_random_exponential,
 )
-import pybreaker
+from circuitbreaker import circuit
 
-app = FastAPI()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# -------------------------------- combine circuitbreaker with exponential backoff retries -------------------------------------------------------
 # Create a circuit breaker
-circuit_breaker = pybreaker.CircuitBreaker(
-    fail_max=5,  # Maximum failures before opening the circuit
-    reset_timeout=30,  # Time (seconds) before trying again
-)
-
-# HTTP client configuration
-http_client = httpx.AsyncClient()
 
 
-# Retry strategy with exponential backoff
+# Circuit breaker decorator
+@circuit(
+    failure_threshold=3, recovery_timeout=30, expected_exception=RetryError
+)  # this is a threadwide circuitbreaker -> three consecutive fails-->open circuit
+async def fetch_data_with_circuit_breaker(
+    method: str, url: str, payload: Optional[Dict] = None
+):
+    return await fetch_data_with_retry(method, url, payload)
+
+
+# -------------------------------Retry strategy with exponential backoff----------------------------------------------
+"""
+Attempt 1: Wait randomly between 0 and 2^1 = 2 seconds before retrying.
+Attempt 2: Wait randomly between 0 and 2^2 = 4 seconds before retrying.
+Attempt 3: Wait randomly between 0 and 2^3 = 8 seconds before retrying.
+Attempt 4: Wait randomly between 0 and 2^4 = 16 seconds before retrying.
+Attempt 5: Wait randomly between 0 and 2^5 = 32 seconds before retrying
+"""
+
+
 @retry(
-    stop=stop_after_attempt(3),  # Stop after 3 attempts
-    wait=wait_exponential(multiplier=1, min=1, max=10),  # Exponential backoff
-    retry=retry_if_exception_type(httpx.RequestError),  # Retry for specific exceptions
+    wait=wait_random_exponential(
+        multiplier=1, max=30
+    ),  # Random wait, capped at 60 seconds
+    stop=stop_after_attempt(4),
+    retry=retry_if_exception_type(
+        httpx.RequestError
+    ),  # Retry only for when request is not processed --> service down (connectionerror, readTimeout, Write Error,...)
+    after=after_log(logger, logging.INFO),  # Log after retry
 )
 async def fetch_data_with_retry(method: str, url: str, payload: Optional[Dict] = None):
     """
@@ -39,44 +65,15 @@ async def fetch_data_with_retry(method: str, url: str, payload: Optional[Dict] =
     Returns:
         JSON response from the external service.
     """
-    if method == "GET":
-        response = await http_client.get(url)
-    elif method == "POST":
-        response = await http_client.post(url, json=payload)
-    elif method == "PUT":
-        response = await http_client.put(url, json=payload)
-    else:
-        raise ValueError(f"Unsupported HTTP method: {method}")
+    async with httpx.AsyncClient() as http_client:
+        if method == "GET":
+            response = await http_client.get(url)
+        elif method == "POST":
+            response = await http_client.post(url, json=payload)
+        elif method == "PUT":
+            response = await http_client.put(url, json=payload)
+        else:
+            raise ValueError(f"Unsupported HTTP method: {method}")
 
-    response.raise_for_status()  # Raise exception for HTTP errors
-    return response.json()
-
-
-# Circuit breaker decorator
-@circuit_breaker
-async def fetch_data_with_circuit_breaker(
-    method: str, url: str, payload: Optional[Dict] = None
-):
-    return await fetch_data_with_retry(method, url, payload)
-
-
-# FastAPI endpoint
-@app.api_route("/external-data", methods=["GET", "POST", "PUT"])
-async def handle_external_data(request: Request, payload: Optional[Dict] = None):
-    """
-    Endpoint to interact with an external service.
-
-    Handles GET, POST, and PUT requests by calling the respective external service.
-    """
-    try:
-        method = request.method
-        # Replace this URL with your actual microservice endpoint
-        url = "http://example.com/api/data"
-        data = await fetch_data_with_circuit_breaker(method, url, payload)
-        return {"status": "success", "data": data}
-    except pybreaker.CircuitBreakerError:
-        raise HTTPException(
-            status_code=503, detail="Service unavailable (circuit open)"
-        )
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch data: {str(e)}")
+        response.raise_for_status()  # Raise exception for HTTP errors
+        return response

@@ -49,3 +49,16 @@ class JobSeekerUpdateRequest(
 
 class RecruiterUpdateRequest(BaseModel):
     company_name: Optional[str] = None
+
+
+class JobseekerPreview(BaseModel):
+    first_name: str
+    last_name: str
+    location: str
+    qualifications: List[str]
+    salary: ISalary = ISalary()
+    education_level: str
+    years_of_experience: int
+    availability: str
+    date_of_birth: Optional[str] = None
+    interests: List[str]

@@ -46,7 +46,7 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
                 db.query(UserJobMapping)
                 .filter(
                     UserJobMapping.user_id == user_id,
-                    UserJobMapping.recruiter_likes == None,  # unrecommended for job
+                    UserJobMapping.user_likes == None,  # unrecommended for job
                 )
                 .all()
             )
@@ -59,7 +59,7 @@ class MySQL_MatchMakingRepo(IMatchMakingRepository):
                 db.query(UserJobMapping)
                 .filter(
                     UserJobMapping.job_id == job_id,
-                    UserJobMapping.user_likes == None,  # unrecommended for user
+                    UserJobMapping.recruiter_likes == None,  # unrecommended for user
                 )
                 .all()
             )

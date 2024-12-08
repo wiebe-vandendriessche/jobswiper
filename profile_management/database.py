@@ -49,7 +49,7 @@ class RecruiterModel(Base):
 
     id = Column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True
-    )    
+    )
     username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -69,6 +69,30 @@ class JobSeekerRepository(IJobSeekerRepository):
                 db.query(JobSeekerModel)
                 .filter(JobSeekerModel.username == username)
                 .first()
+            )
+            if job_seeker:
+                return JobSeeker(
+                    id=job_seeker.id,
+                    username=job_seeker.username,
+                    first_name=job_seeker.first_name,
+                    last_name=job_seeker.last_name,
+                    email=job_seeker.email,
+                    location=job_seeker.location,
+                    phone_number=job_seeker.phone_number,
+                    education_level=job_seeker.education_level,
+                    years_of_experience=job_seeker.years_of_experience,
+                    availability=job_seeker.availability,
+                    salary=Salary(job_seeker.salary_min, job_seeker.salary_max),
+                    interests=job_seeker.interests,
+                    qualifications=job_seeker.qualifications,
+                    date_of_birth=str(job_seeker.date_of_birth),
+                )
+            return None
+
+    async def find_by_uuid(self, userid: str) -> Optional[JobSeeker]:
+        with self.get_db() as db:
+            job_seeker = (
+                db.query(JobSeekerModel).filter(JobSeekerModel.id == userid).first()
             )
             if job_seeker:
                 return JobSeeker(
@@ -144,13 +168,11 @@ class RecruiterRepository(IRecruiterRepository):
                     id=recruiter.id,
                 )
             return None
-    
+
     async def find_by_uuid(self, uuid: str) -> Optional[Recruiter]:
         with self.get_db() as db:
             recruiter = (
-                db.query(RecruiterModel)
-                .filter(RecruiterModel.id == uuid)
-                .first()
+                db.query(RecruiterModel).filter(RecruiterModel.id == uuid).first()
             )
             if recruiter:
                 return Recruiter(

@@ -3,7 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
 from dataclasses import asdict
-
+from circuitbreaker import CircuitBreakerError
+from retry_circuit_breaker import fetch_data_with_circuit_breaker
 from rest_interfaces.matching_interfaces import ISwipe, Swipe
 from rabbit import PikaPublisher
 from main import verify_token_get_user
@@ -29,20 +30,24 @@ async def user_recommendations(
         )
 
     url = f"{MATCHING_SERVICE_URL}/recommendations/user/{user_id}"  # Replace with actual URL
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url)
-            response.raise_for_status()  # Will raise an HTTPError if the status code is 4xx/5xx
-            return response.json()  # Return the data if the response is successful
-        except httpx.HTTPStatusError as http_err:
-            # If there's an HTTP error (4xx/5xx), propagate it as a FastAPI HTTPException
-            raise HTTPException(status_code=response.status_code, detail=str(http_err))
-        except httpx.RequestError as req_err:
-            # For other request errors (e.g., network issues), raise a 500 error
-            raise HTTPException(status_code=500, detail=f"Request error: {req_err}")
-        except Exception as e:
-            # Catch other unforeseen errors and propagate as 500 error
-            raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+    try:
+        response = await fetch_data_with_circuit_breaker("GET", url)
+        return response.json()  # Return the data if the response is successful
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as http_err:
+        # If there's an HTTP error (4xx/5xx), propagate it as a FastAPI HTTPException
+        raise HTTPException(
+            status_code=http_err.response.status_code, detail=http_err.response.json()
+        )
+    except httpx.RequestError as req_err:
+        # For other request errors (e.g., network issues), raise a 500 error
+        raise HTTPException(status_code=500, detail=f"Request error: {req_err}")
+    except Exception as e:
+        # Catch other unforeseen errors and propagate as 500 error
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
 
 # Function to call the job recommendation endpoint using httpx
@@ -55,20 +60,24 @@ async def job_recommendations(
 
     """
     url = f"{MATCHING_SERVICE_URL}/recommendations/job/{job_id}"  # Replace with actual URL
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url)
-            response.raise_for_status()  # Will raise an HTTPError if the status code is 4xx/5xx
-            return response.json()  # Return the data if the response is successful
-        except httpx.HTTPStatusError as http_err:
-            # If there's an HTTP error (4xx/5xx), propagate it as a FastAPI HTTPException
-            raise HTTPException(status_code=response.status_code, detail=str(http_err))
-        except httpx.RequestError as req_err:
-            # For other request errors (e.g., network issues), raise a 500 error
-            raise HTTPException(status_code=500, detail=f"Request error: {req_err}")
-        except Exception as e:
-            # Catch other unforeseen errors and propagate as 500 error
-            raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+    try:
+        response = await fetch_data_with_circuit_breaker("GET", url)
+        return response.json()  # Return the data if the response is successful
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError as http_err:
+        # If there's an HTTP error (4xx/5xx), propagate it as a FastAPI HTTPException
+        raise HTTPException(
+            status_code=http_err.response.status_code, detail=http_err.response.json()
+        )
+    except httpx.RequestError as req_err:
+        # For other request errors (e.g., network issues), raise a 500 error
+        raise HTTPException(status_code=500, detail=f"Request error: {req_err}")
+    except Exception as e:
+        # Catch other unforeseen errors and propagate as 500 error
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
 
 # --------------------------------------Publisher endpoint----------------------------------------------------------------
