@@ -39,6 +39,5 @@ class IMatchPublisher(ABC):
 class Swipe:
     subject: str  # can be "user" or "job"
     user_id: str
-    recruiter_id: str
     job_id: str
     decision: bool
