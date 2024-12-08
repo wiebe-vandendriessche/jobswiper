@@ -93,7 +93,7 @@ public class ElasticDB {
                 Job matchedJob = hit.source();
                 System.out.println("Matched Job: " + matchedJob.getId()+ ", Score: " + hit.score());
 
-                Match match = new Match(jobSeeker.getId(),matchedJob.getId() );
+                Match match = new Match(jobSeeker.getId(),matchedJob.getId(), matchedJob.getPostedByUuid() );
                 matches.add(match);
             }
         } catch (IOException e) {
@@ -142,7 +142,7 @@ public class ElasticDB {
                 JobSeeker matchedJobSeeker = hit.source();
                 System.out.println("Matched Job Seeker: " + matchedJobSeeker.getUsername() + ", Score: " + hit.score());
 
-                Match match = new Match(matchedJobSeeker.getId(),job.getId() );
+                Match match = new Match(matchedJobSeeker.getId(),job.getId(), job.getPostedByUuid() );
                 matches.add(match);
             }
         } catch (IOException e) {

@@ -41,7 +41,7 @@ public class MatchingDB {
 
     public void insertUserJobMapping(List<Match> matches) {
         String checkQuery = "SELECT COUNT(*) FROM user_job_mapping WHERE user_id = ? AND job_id = ?";
-        String insertQuery = "INSERT INTO user_job_mapping (user_id, job_id, user_likes, recruiter_likes) VALUES (?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO user_job_mapping (user_id, job_id, recruiter_id, user_likes, recruiter_likes) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery);
              PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
@@ -61,8 +61,9 @@ public class MatchingDB {
                     // Insert if the record does not exist
                     insertStmt.setString(1, match.getUserId());
                     insertStmt.setString(2, match.getJobId());
-                    insertStmt.setNull(3, java.sql.Types.BOOLEAN);
+                    insertStmt.setString(3, match.getRecruiterIdId());
                     insertStmt.setNull(4, java.sql.Types.BOOLEAN);
+                    insertStmt.setNull(5, java.sql.Types.BOOLEAN);
 
                     int rowsInserted = insertStmt.executeUpdate();
                     if (rowsInserted > 0) {
