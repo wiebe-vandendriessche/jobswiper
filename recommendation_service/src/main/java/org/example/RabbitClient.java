@@ -14,8 +14,11 @@ public class RabbitClient {
     private static final int RETRY_DELAY_MS = 5000; // Delay between retries in milliseconds
     private static final Logger logger = LoggerFactory.getLogger(RabbitClient.class);
 
-    private static final String QUEUENAME_JOBSEEKER = "jobseeker_update";
-    private static final String QUEUENAME_JOB = "job_update";
+
+
+
+    private static final String QUEUENAME_JOBSEEKER = System.getenv("JOBSEEKER_BUS");
+    private static final String QUEUENAME_JOB = System.getenv("JOB_BUS");
 
     private ObjectMapper objectMapper = new ObjectMapper();
 

@@ -43,7 +43,6 @@ public class Main {
 
         elasticDB.insertJobSeeker(jobseeker);
 
-
         
         String title = "Software Engineer";
         String companyName = "Tech Corp";
@@ -65,88 +64,9 @@ public class Main {
         elasticDB.insertJob(job);
 
 
-
-
-
-        try {
-            // Perform a search query to retrieve the document
-            SearchResponse<JobSeeker> searchResponse = client.search(s -> s
-                            .index("jobseekers") // The index name
-                            .query(q -> q
-                                    .match(m -> m
-                                            .field("first_name") // Field to search by
-                                            .query("John") // The value you're searching for
-                                    )
-                            ),
-                    JobSeeker.class // Map the result to JobSeeker class
-            );
-
-            TotalHits total = searchResponse.hits().total();
-
-            // Process and print the search results
-            System.out.println("Search Results:" + total);
-            List<Hit<JobSeeker>> hits = searchResponse.hits().hits();
-            for (Hit<JobSeeker> hit: hits) {
-                JobSeeker js = hit.source();
-                System.out.println("Found product " + js.getUsername() + ", score " + hit.score());
-                System.out.println(js);
-            }
-        } catch (IOException e) {
-            System.out.println("Search failed");
-            e.printStackTrace();
-        }
-
-
-
-        try {
-            // Perform a search query to retrieve the document
-            SearchResponse<Job> searchResponse = client.search(s -> s
-                            .index("jobs") // The index name
-                            .query(q -> q
-                                    .match(m -> m
-                                            .field("title") // Field to search by
-                                            .query("Software Engineer") // The value you're searching for
-                                    )
-                            ),
-                    Job.class // Map the result to JobSeeker class
-            );
-
-            TotalHits total = searchResponse.hits().total();
-
-            // Process and print the search results
-            System.out.println("Search Results:" + total);
-            List<Hit<Job>> hits = searchResponse.hits().hits();
-            for (Hit<Job> hit: hits) {
-                Job j = hit.source();
-                System.out.println("Found product " + j.getDescription() + ", score " + hit.score());
-                System.out.println(j);
-            }
-        } catch (IOException e) {
-            System.out.println("Search failed");
-            e.printStackTrace();
-        }
-
-
-
-
-
-
-        System.out.println("new");
         MatchingDB matchingdb = new MatchingDB();
         RabbitClient rbClient = new RabbitClient(elasticDB, matchingdb);
         rbClient.consume();
-
-
-
-
-        while(true){
-
-        }
-
-
-
-
-
 
     }
 }
