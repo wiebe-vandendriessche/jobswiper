@@ -16,8 +16,11 @@ function Header() {
 
   const handleHomeClick = () => {
     navigate("/"); // Navigate to the home route
-  }
+  };
 
+  const handleForumClick = () => {
+    navigate("/matches"); // Navigate to the matches route
+  };
 
   return (
     <div className="header">
@@ -29,7 +32,7 @@ function Header() {
           <h1>Job Finder</h1>
         </Button>
       </div>
-      <IconButton>
+      <IconButton onClick={handleForumClick}>
         <Forum fontSize="large" className="header__icon" />
       </IconButton>
     </div>

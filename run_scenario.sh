@@ -12,7 +12,7 @@ RECRUITER_ITERATIONS=30
 # Delay in milliseconds
 DELAY=5
 
-# Run the add-jobseekers script 100 times using --iteration-count
+# Run the add-jobseekers script 50 times using --iteration-count
 echo "Running add-jobseekers script for $JOBSEEKER_ITERATIONS iterations..."
 newman run "$JOBSEEKER_SCRIPT" -e "$ENVIRONMENT_FILE" --iteration-count "$JOBSEEKER_ITERATIONS" --delay-request "$DELAY"
 
