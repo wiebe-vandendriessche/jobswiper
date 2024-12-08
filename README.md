@@ -20,10 +20,29 @@ It also protects other microservices endpoints, by checking if the user is logge
 
 
 ### 2. **JWT Authentication service (`jwt_auth`)**
-This service used the JWT library, to hash passwords and save these together with the useraccounts in `mysql_auth` database. It could provide a token that expired and could also be cached in the gateway for maintaining a session. This essentially fungates as our OAuth service. 
+The JWT Authentication Service manages user registration, login, and token verification. It interacts with the API Gateway to secure access to protected resources.
 
-- **Ports**: Exposes API Gateway on `localhost:8080`.
-- **Dependencies**: Depends on the `jwt_auth` service.
+Key Functions:
+User Registration (POST /auth/):
+
+User is created by hashing the password with bcrypt and storing it in the database.
+Login & Token Issuance (POST /auth/token):
+
+User provides username and password. If valid, a JWT token is issued, which includes the username and user ID.
+Token Verification (POST /auth/verify-token):
+
+The token is sent to the Authentication Service for validation. If valid, user info is returned. If invalid, a 401 Unauthorized error is returned.
+Interaction with API Gateway:
+Login:
+
+The API Gateway forwards login credentials to the JWT Authentication Service and returns the JWT token to the client.
+Token Validation:
+
+The API Gateway checks the Authorization header for a token, verifies it by calling the /auth/verify-token endpoint, and grants access if valid.
+Caching:
+
+The API Gateway caches user info associated with valid tokens to reduce redundant verification requests.
+This system ensures secure, token-based user authentication for protected routes.
 
 ### 3. **Profile Management Service (`profile_management`)**
 This service is responsible for CRUD actions on the profile of a JobSeeker or a Recruiter. It is designed to follow the union architecture, where there are only inward dependencies. It connects to a mysql database `mysql_profiles`. 
