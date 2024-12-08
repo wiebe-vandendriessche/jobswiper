@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Annotated, Union
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +10,8 @@ from rabbit import PikaPublisher
 from caching import cache_all_jobs, cache_job, get_all_jobs_cache, get_job, remove_all_jobs_cache, remove_job_cache
 from rest_interfaces.job_interfaces import IJob, IJobPreview, JobUpdateRequest
 from main import verify_token_get_user
-
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 Jobs_router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 JOB_MANAGEMENT_SERVICE_URL = os.getenv("JOB_MANAGEMENT_SERVICE_URL")
@@ -124,6 +126,8 @@ async def job_create(
         # Step 4b: Rollback - Delete the job
         if job_id:
             await job_delete(job_id, user)
+        
+        logger.info("ROLLBACK WAS DONE!")
         raise HTTPException(
             status_code=500,
             detail=f"SAGA failed: {str(exc)}, but rollback was done",
