@@ -54,14 +54,41 @@ The Job Service will manage job listings, job postings, and related functionalit
 - **Dependencies**: To be defined.
 - **Environment Variables**: To be defined.
 
-### 8. **Matching Service (Future Addition)**
---
+### 8. **Matching Service**
 
-- **Dependencies**: To be defined.
-- **Environment Variables**: To be defined.
+The Recommendation Service is a microservice designed to efficiently link jobseekers with jobs. It analyses incoming data and performs advanced searches to identify the best matches using ElasticSearch. The results are stored in a relational database for future use and retrieval.
+The service listens to two RabbitMQ queues:
+
+1. **job_update**: Handles new or updated job information.
+2. **jobseeker_update**: Handles new or updated jobseeker information.
+
+#### Jobseeker Update Processing Flow
+
+1. **Receive Message**: A `jobseeker_update` message (in JSON format) is consumed from RabbitMQ.
+2. **JSON to Java Object**: The JSON structure is deserialized into a Java object representing the jobseeker.
+3. **ElasticSearch Update**: The jobseeker data is inserted/updated in the ElasticSearch database.
+4. **Find Matches**:
+   - Searches the ElasticSearch database for matching jobs based on predefined criteria.
+   - Leverages ElasticSearch's advanced query capabilities for efficient and fast results.
+5. **Process Matches**:
+   - Store new matches in the MySQL database.
+
+The Processing Flow for job updates is equivalent.
+
+
+- Structure of the Recommendation Service
+  - `main.java` Sets up and configures the necessary components.
+  - `Job.java, JobSeeker.java, Salary.java` are the Java classes that correspond to these entities and are deserialized from JSON messages received from the message broker.
+  - `ElasticsearchConnector.java` sets up the connection to the Elasticsearch database using the right credentials
+  - `ElasticDB.java` Provides methods for inserting and retrieving jobseekers and jobs into the database. Executes search queries to match jobseekers with relevant jobs based on their profiles.
+  - `MatchingDB.java` sets up the connection to the *mysql_matching* database. It contains a method to insert recommendation matches.
+  - `Match.java` is a simple class to store a recommendation match.
+  - `RabbitClient.java` sets up the connection to RabbitMQ and starts consuming from two seperate queues. It contains the callback functions to process a new message.
+
+
 
 ### 9. **Recommendation Service (Future Addition)**
---
+
 
 - **Dependencies**: To be defined.
 - **Environment Variables**: To be defined.
