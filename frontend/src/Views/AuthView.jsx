@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import AuthForm from "./AuthComponents/AuthForm";
 import AuthenticatedView from "./AuthComponents/AuthenticatedView";
+import { AuthContext } from "./AuthContext";
+import { useContext } from "react";
 
 //const apiBaseUrl = "http://api_gateway:8080";
 const apiBaseUrl = "http://localhost:8081";
@@ -8,6 +10,10 @@ const apiBaseUrl = "http://localhost:8081";
 console.log("API Base URL:", apiBaseUrl);
 
 function AuthView({ className }) {
+  // context for full application
+  const { authData, setAuthData } = useContext(AuthContext);
+
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
 
@@ -25,10 +31,17 @@ function AuthView({ className }) {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       if (response.status === 401) {
         handleLogout(); // Call logout to reset state
       } else if (!response.ok) {
+        setAuthData({
+          selected_user_id: "",
+          selected_profile_name: "",
+          userType: "",
+          selected_job_id: null,
+          selected_job_name: "",
+        });
         throw new Error("Failed to fetch user account");
       } else {
         const data = await response.json();
@@ -43,12 +56,20 @@ function AuthView({ className }) {
     localStorage.removeItem("jwtToken");
     setIsAuthenticated(false);
     setUserData(null);
+    // Reset context
+    setAuthData({
+      selected_user_id: "",
+      selected_profile_name: "",
+      userType: "",
+      selected_job_id: null,
+      selected_job_name: "",
+    });
   };
 
   return (
     <div className={className}>
       {isAuthenticated ? (
-        <AuthenticatedView userData={userData} onLogout={handleLogout}/>
+        <AuthenticatedView userData={userData} onLogout={handleLogout} />
       ) : (
         <AuthForm
           setIsAuthenticated={setIsAuthenticated}
