@@ -7,7 +7,7 @@ services:
       - "3000:80" # Serve production build on localhost:3000
     restart: always
     depends_on:
-      - api_gateway
+      - nginx_api_gateway
     networks:
       - private-network
     environment:
