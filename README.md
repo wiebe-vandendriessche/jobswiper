@@ -221,7 +221,8 @@ chmod +x showcase_saga.sh
 This script will create a job where the payment value is set to 0 and a job where the value is set to 1.
 The first one will fail in the payment service since the payment won't be authorized. This will rollback the previous step of storing the new job in the database. The job will be deleted from the database and a 500-status will be returned.
 
-The second one will succeed and a new job will posted on the job_update queueu of the recommendations service.
+The second one will succeed and a new job will posted on the job_update queue of the recommendations service.
 
 The output in the api_gateway container should look like this:
+
 ![output saga](./screenshots/saga_output.png)
