@@ -47,7 +47,7 @@ public class ElasticsearchConnector {
                             );
 
                             // Attempt to connect
-                            restClient = RestClient.builder(new HttpHost("elasticsearch", 9200)).setHttpClientConfigCallback(httpClientBuilder -> {
+                            restClient = RestClient.builder(new HttpHost(elastic_host, elastic_port)).setHttpClientConfigCallback(httpClientBuilder -> {
                                 httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                                 return httpClientBuilder;
                             }).build();
