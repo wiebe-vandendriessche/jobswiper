@@ -86,7 +86,7 @@ async def profile_get(
         # Raise an HTTPException with the same status code and error details
         raise HTTPException(
             status_code=exc.response.status_code,
-            detail=exc.response
+            detail=exc.response.json()
         )
     except Exception as exc:
         # Handle non-HTTP exceptions
