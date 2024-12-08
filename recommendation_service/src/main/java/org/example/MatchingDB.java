@@ -8,7 +8,6 @@ public class MatchingDB {
     private String USERNAME;
     private String PASSWORD;
 
-    private Connection connection;
 
 
 
@@ -26,14 +25,26 @@ public class MatchingDB {
         this.USERNAME = user;
         this.PASSWORD = password;
 
-        try {
-            this.connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            System.out.println("Database connection established.");
-        } catch (SQLException e) {
-            System.err.println("Error connecting to the database: " + e.getMessage());
+
+    }
+
+    private Connection getConnection() {
+        while (true) {
+            try {
+                Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                System.out.println("Database connection established.");
+                return connection;
+            } catch (SQLException e) {
+                System.err.println("Failed to connect to the database: " + e.getMessage());
+                System.out.println("Retrying in 3 seconds...");
+                try {
+                    Thread.sleep(3000); // Wait for 5 seconds before retrying
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt(); // Restore the interrupted status
+                    throw new RuntimeException("Retry interrupted", ie);
+                }
+            }
         }
-
-
     }
 
 
@@ -43,7 +54,8 @@ public class MatchingDB {
         String checkQuery = "SELECT COUNT(*) FROM user_job_mapping WHERE user_id = ? AND job_id = ?";
         String insertQuery = "INSERT INTO user_job_mapping (user_id, job_id, recruiter_id, user_likes, recruiter_likes) VALUES (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery);
+        try (Connection connection = getConnection();
+             PreparedStatement checkStmt = connection.prepareStatement(checkQuery);
              PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
 
             for (Match match : matches) {
