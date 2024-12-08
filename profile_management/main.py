@@ -21,6 +21,7 @@ from rest_interfaces.profile_interfaces import (
     ISalary,
     IUserProfile,
     JobSeekerUpdateRequest,
+    JobseekerPreview,
     RecruiterUpdateRequest,
 )
 
@@ -114,11 +115,37 @@ async def create_account(details: Union[IJobSeeker, IRecruiter]):
     )
 
 
-@app.get("/accounts/{username}")
-async def get_account(username: str):
+@app.get("/accounts/{userid}/preview", response_model=JobseekerPreview)
+async def get_preview_account(userid: str):
     """
     Get the details of a job seeker or recruiter account by username.
     - username: The username of the account to fetch.
+    """
+    # Retrieve account by username
+    try:
+        user = await service.get_user_perview(userid)
+        preview = JobseekerPreview(
+            first_name=user.first_name,
+            last_name=user.last_name,
+            location=user.location,
+            qualifications=user.qualifications,
+            salary=ISalary(min=user.salary.min, max=user.salary.max),
+            education_level=user.education_level,
+            years_of_experience=user.years_of_experience,
+            availability=user.availability,
+            date_of_birth=user.date_of_birth,
+            interests=user.interests,
+        )
+        return preview
+    except NameError as e:
+        raise HTTPException(status_code=404, detail=f"{e}")
+
+
+@app.get("/accounts/{username}")
+async def get_account(username: str):
+    """
+    Get the details of a job seeker account by uuid.
+    - userid: The uuid of the account to fetch.
     """
     # Retrieve account by username
     try:
@@ -140,6 +167,17 @@ async def update_job_seeker(
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@app.get("/recruiter/{uuid}/credentials")
+async def check_credentials(uuid: str):
+    try:
+        await service.check_existing_uuid(uuid)
+        return JSONResponse(
+            content={"message": "Credentials are valid"}, status_code=200
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @app.put("/recruiter/{username}")
 async def update_recruiter(
     username: str,
@@ -149,15 +187,4 @@ async def update_recruiter(
         await service.update_recruiter(username, company_name=updates.company_name)
         return {"message": "Recruiter profile updated successfully"}
     except NameError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-@app.get("/recruiter/{uuid}/credentials")
-async def check_credentials(uuid: str):
-    try:
-        await service.check_existing_uuid(uuid)
-        return JSONResponse(
-            content={"message": "Credentials are valid"},
-            status_code=200
-        )
-    except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))

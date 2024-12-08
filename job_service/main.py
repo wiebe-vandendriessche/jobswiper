@@ -79,6 +79,7 @@ async def create_job(job_details: IJob):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"{e}")
 
+
 @app.get("/jobs/{job_id}/preview")
 async def get_job_preview(job_id: str):
     """
@@ -90,6 +91,7 @@ async def get_job_preview(job_id: str):
         return job
     except ValueError as e:
         raise HTTPException(status_code=404, detail=f"{e}")
+
 
 @app.get("/jobs/{recruiter_id}/{job_id}")
 async def get_job(job_id: str, recruiter_id: str):
@@ -143,7 +145,7 @@ async def delete_job(job_id: str, recruiter_id: str):
         return {"message": "Job deleted successfully"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    
+
 
 @app.post("/jobs/{recruiter_id}/{job_id}")
 async def approve_job(job_id: str, recruiter_id):
@@ -162,4 +164,4 @@ async def approve_job(job_id: str, recruiter_id):
         )
     except ValueError as e:
         logger.warning(f"JOB PUBLISHING FAILED: {job_id}")
-        raise HTTPException(status_code=404, delail=str(e))
+        raise HTTPException(status_code=404, detail=str(e))
