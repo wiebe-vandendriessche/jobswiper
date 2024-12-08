@@ -1,6 +1,6 @@
 # Microservices Application
 
-This repository defines a microservices-based architecture, using Docker Compose to orchestrate various services. The system is designed to be modular, with the intention of easily sclaing it in the future.
+This repository defines a microservices-based architecture, using Docker Compose to orchestrate various services. The system is designed to be modular, with the intention of easily sclaing it in the future. We made it easy to test this application, this is why we put the secrets in our docker compose in plain text.
 
 ## Overview of Services
 
@@ -107,18 +107,6 @@ The Processing Flow for job updates is equivalent.
   - `MatchingDB.java` sets up the connection to the *mysql_matching* database. It contains a method to insert recommendation matches.
   - `Match.java` is a simple class to store a recommendation match.
   - `RabbitClient.java` sets up the connection to RabbitMQ and starts consuming from two seperate queues. It contains the callback functions to process a new message.
-
-
-
-
-## Network Configuration
-
-All services are connected via a private Docker network (`private-network`) to ensure secure communication between containers.
-
-## Volumes
-
-- **msql_auth_data**: Persists data for the MySQL authentication database.
-- **msql_profiles_data**: Persists data for the MySQL profiles database.
 
 ## How to Run the Application
 
@@ -231,7 +219,7 @@ IT'S A MATCH! Now that your Recruiter and Jobseeker profiles both swiped right o
 
 
 ## How to test the SAGA
-The saga is explained in the file uploaded on Ufora. To test the saga, run the `showcase_saga.sh` script using the following commannds in the root folder of this project.
+The saga is explained in the file uploaded on Ufora. To test the saga, run the `showcase_saga.sh` script using the following commands in the root folder of this project.
 ```bash
 chmod +x showcase_saga.sh
 ./showcase_saga.sh
@@ -244,3 +232,6 @@ The second one will succeed and a new job will posted on the job_update queue of
 The output in the api_gateway container should look like this:
 
 ![output saga](./screenshots/saga_output.png)
+
+## How to test the retries and the circuitbraker
+Before updating a profile, you can stop the profile management service in Docker Desktop. Once stopped, attempt the update while monitoring the application logs (in the terminal where you ran docker compose up). You'll notice the application retrying with a random exponential backoff. After three manual update attempts (resulting in a total of nine retries due to internal retries in the gateway), the circuit will open, causing the request to fail fast. At this point, restart the service in Docker Compose. Once the circuit breaker timeout expires, the update process will work again.
