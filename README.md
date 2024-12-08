@@ -47,14 +47,18 @@ This service is responsible for CRUD actions on the jobs for a given Recruiter. 
   - `rest_interfaces/*` contain the interfaces/ contracts with the gatewayAPI
   - `publisher.py` defines the publisher that implements the publisher adapter, and sends updates of the job to the Recommendation service
 
+### 5. **Matching Service**
 
-### 7. **Job Service (Future Addition)**
-The Job Service will manage job listings, job postings, and related functionalities. It will interact with other services (like profile management) to offer job search and posting features.
+The Matching Microservice is responsible for connecting jobseekers with job opportunities by leveraging recommendations from the `mysql_matching` database. It provides an API for the UI to fetch these recommendations and listens to swipe actions (like/dislike) from a message bus to process user preferences. When both a jobseeker and a recruiter express mutual interest, the service identifies a true match and sends it to a dedicated matches queue.
 
-- **Dependencies**: To be defined.
-- **Environment Variables**: To be defined.
+- Structure of the Matching Service:
+  - `main.py` defines all the endpoints and uses the application layer
+  - `application_layer` contains most of the logic , using dependency injection to insert the used DBadapters and PublisherAdapters
+  - `domain_model` contains the state and minor functionality
+  - `interfaces.py` define the interfaces for the adapters (application layer)
 
-### 8. **Matching Service**
+
+### 6. **Recommendation Service**
 
 The Recommendation Service is a microservice designed to efficiently link jobseekers with jobs. It analyses incoming data and performs advanced searches to identify the best matches using ElasticSearch. The results are stored in a relational database for future use and retrieval.
 The service listens to two RabbitMQ queues:
@@ -87,11 +91,6 @@ The Processing Flow for job updates is equivalent.
 
 
 
-### 9. **Recommendation Service (Future Addition)**
-
-
-- **Dependencies**: To be defined.
-- **Environment Variables**: To be defined.
 
 ## Network Configuration
 
