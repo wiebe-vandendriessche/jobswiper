@@ -1,0 +1,141 @@
+{
+	"id": "dcae7bde-1ab4-492f-a56f-8a94773cfab0",
+	"name": "Environment",
+	"values": [
+		{
+			"key": "qualifications_env",
+			"value": "Bachelor of Science in Computer Science,Master of Science in Artificial Intelligence,PhD in Data Science,Diploma in Software Engineering,Certification in Cloud Computing,Course in Cybersecurity,Certification in Machine Learning,Course in Blockchain Technology,Certification in Full-Stack Development,Diploma in Information Technology,Bachelor of Engineering in Computer Systems,Diploma in Embedded Systems,Master of Science in Robotics,Bachelor of Science in Data Analytics,Certification in DevOps,Course in Mobile Application Development,Diploma in Network Engineering",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "interests_env",
+			"value": "Programming,Artificial Intelligence,Machine Learning,Blockchain,Data Science,Cybersecurity,Web Development,App Development,Robotics,Space Exploration,Virtual Reality,Augmented Reality,Quantum Computing,Game Development,Open Source Projects,Big Data,Internet of Things (IoT),Cloud Computing,DevOps,Computer Graphics",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "locations_env",
+			"value": "New York,San Francisco,Los Angeles,Chicago,Boston,Seattle,Austin,Denver,Houston,Miami,Atlanta,London,Paris,Berlin,Tokyo,Seoul,Shanghai,Sydney,Singapore,Dubai,Brussels,Amsterdam,Delhi,Mumbai,Bangalore,Beijing,Stockholm,Helsinki,Vancouver,Toronto,Ghent",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "companies_env",
+			"value": "Google,Amazon,Microsoft,Apple,Facebook,IBM,Intel,Netflix,Adobe,SAP,Oracle,Salesforce,Airbnb,Uber,Spotify,Tesla,SpaceX,Nvidia,Zoom,Pinterest,Dropbox,Twitch,Slack,Snapchat,TikTok,Stripe,Twitter,Shopify,PayPal,Samsung,Xiaomi,Alibaba,Tencent,UGent",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "randomId",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "username",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "firstName",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "lastName",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "email",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "location",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "phoneNumber",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "salaryMin",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "salaryMax",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "educationLevel",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "yearsOfExperience",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "availability",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "dateOfBirth",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "qualifications",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "interests",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "companyName",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "password",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "any",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2024-12-08T15:30:51.050Z",
+	"_postman_exported_using": "Postman/11.21.0"
+}

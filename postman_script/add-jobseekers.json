@@ -1,0 +1,291 @@
+{
+	"info": {
+		"_postman_id": "a70abb97-b545-444f-b450-d87db4cf1bff",
+		"name": "Add jobseekers",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30255660",
+		"_collection_link": "https://dark-eclipse-726504.postman.co/workspace/470851ac-4952-4894-81fb-efeabe8583a3/collection/30255660-a70abb97-b545-444f-b450-d87db4cf1bff?action=share&source=collection_link&creator=30255660"
+	},
+	"item": [
+		{
+			"name": "sign-up",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Save username and password to be used in the next request",
+							"console.log(\"User created successfully:\", pm.environment.get(\"username\"));",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Generate a random username",
+							"const randomUsername = `user_${Math.random().toString(36).substring(2, 10)}`;",
+							"",
+							"// Generate a random password",
+							"const randomPassword = Math.random().toString(36).substring(2, 12) + \"!\";",
+							"",
+							"// Set environment or global variables",
+							"pm.environment.set(\"username\", randomUsername);",
+							"pm.environment.set(\"password\", randomPassword);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/sign-up",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"sign-up"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Login successful\", function () {",
+							"    pm.response.to.have.status(200);",
+							"    console.log(\"Logged in with:\", pm.environment.get(\"username\"));",
+							"    const responseBody = pm.response.json()",
+							"    const accessToken = responseBody.access_token;",
+							"    pm.expect(accessToken).to.not.be.undefined;",
+							"",
+							"    // Save the token to a collection variable",
+							"    pm.environment.set(\"access_token\", accessToken);",
+							"",
+							"    console.log(\"Access Token saved:\", accessToken);",
+							"",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8081/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create profile",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const accessToken = pm.environment.get(\"access_token\");",
+							"if (accessToken) {",
+							"    pm.request.headers.add({",
+							"        key: 'Authorization',",
+							"        value: `Bearer ${accessToken}`",
+							"    });",
+							"}",
+							"",
+							"// Helper function to pick random values from a list",
+							"function getRandomFromList(list, count) {",
+							"    const shuffled = list.sort(() => 0.5 - Math.random());",
+							"    return shuffled.slice(0, count);",
+							"}",
+							"",
+							"// Access environment-wide qualifications and interests",
+							"const qualificationsList = pm.environment.get(\"qualifications_env\").split(\",\");",
+							"const interestsList = pm.environment.get(\"interests_env\").split(\",\");",
+							"const locationsList = pm.environment.get(\"locations_env\").split(\",\");",
+							"",
+							"// Helper function to pick random values from a list",
+							"function getRandomFromList(list, count) {",
+							"    const shuffled = list.sort(() => 0.5 - Math.random());",
+							"    return shuffled.slice(0, count);",
+							"}",
+							"",
+							"// Random user details",
+							"const randomUsername = pm.environment.get(\"username\"); // use the logged-in user",
+							"const randomId = \"\";",
+							"const randomFirstName = `First_${Math.random().toString(36).substring(2, 7)}`;",
+							"const randomLastName = `Last_${Math.random().toString(36).substring(2, 7)}`;",
+							"const randomEmail = `${randomFirstName}.${randomLastName}@example.com`;",
+							"const randomLocation = getRandomFromList(locationsList, 1)[0]",
+							"const randomPhone = `+32${Math.floor(100000000 + Math.random() * 900000000)}`;",
+							"const randomSalaryMin = Math.floor(Math.random() * 50000);",
+							"const randomSalaryMax = randomSalaryMin + Math.floor(Math.random() * 100000);",
+							"const randomEducationLevel = `Level_${Math.random().toString(36).substring(2, 5)}`;",
+							"const randomExperience = Math.floor(Math.random() * 20);",
+							"const randomAvailability = `Availability_${Math.random().toString(36).substring(2, 5)}`;",
+							"const randomDateOfBirth = `${Math.floor(1970 + Math.random() * 30)}-${Math.floor(1 + Math.random() * 12)}-${Math.floor(1 + Math.random() * 28)}`;",
+							"const randomCompanyName = `Company_${Math.random().toString(36).substring(2, 7)}`;",
+							"// Select 2 or 3 random qualifications and interests",
+							"const randomQualifications = getRandomFromList(qualificationsList, Math.floor(Math.random() * 2) + 2); // 2-3 qualifications",
+							"const randomInterests = getRandomFromList(interestsList, Math.floor(Math.random() * 2) + 2); // 2-3 interests",
+							"",
+							"// Save variables as Environment Variables",
+							"pm.environment.set(\"randomId\", randomId);",
+							"pm.environment.set(\"username\", randomUsername);",
+							"pm.environment.set(\"firstName\", randomFirstName);",
+							"pm.environment.set(\"lastName\", randomLastName);",
+							"pm.environment.set(\"email\", randomEmail);",
+							"pm.environment.set(\"location\", randomLocation);",
+							"pm.environment.set(\"phoneNumber\", randomPhone);",
+							"pm.environment.set(\"salaryMin\", randomSalaryMin);",
+							"pm.environment.set(\"salaryMax\", randomSalaryMax);",
+							"pm.environment.set(\"educationLevel\", randomEducationLevel);",
+							"pm.environment.set(\"yearsOfExperience\", randomExperience);",
+							"pm.environment.set(\"availability\", randomAvailability);",
+							"pm.environment.set(\"dateOfBirth\", randomDateOfBirth);",
+							"pm.environment.set(\"qualifications\", randomQualifications.join(\",\"));",
+							"pm.environment.set(\"interests\", randomInterests.join(\",\"));",
+							"pm.environment.set(\"companyName\", randomCompanyName);",
+							"",
+							"// Debugging",
+							"console.log(\"Generated profile data:\", {",
+							"    randomId, randomUsername, randomFirstName, randomLastName, randomEmail, randomLocation, randomPhone",
+							"});",
+							"console.log(pm.environment.get(\"access_token\"));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": \"{{randomId}}\",\n  \"username\": \"{{username}}\",\n  \"first_name\": \"{{firstName}}\",\n  \"last_name\": \"{{lastName}}\",\n  \"email\": \"{{email}}\",\n  \"location\": \"{{location}}\",\n  \"phone_number\": \"{{phoneNumber}}\",\n  \"qualifications\": [\"{{qualifications}}\"],\n  \"salary\": {\n    \"min\": {{salaryMin}},\n    \"max\": {{salaryMax}}\n  },\n  \"education_level\": \"{{educationLevel}}\",\n  \"years_of_experience\": {{yearsOfExperience}},\n  \"availability\": \"{{availability}}\",\n  \"date_of_birth\": \"{{dateOfBirth}}\",\n  \"interests\": [\"{{interests}}\"]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/profile/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"profile",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
