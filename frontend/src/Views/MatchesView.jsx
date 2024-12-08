@@ -32,7 +32,12 @@ function MatchesView() {
         if (response.ok) {
           const data = await response.json();
           console.log("Conversations:", data);
-          setMatches(data.matches); // Set the matches from the response
+          // Remove duplicates based on job_id or jobseeker_id
+          const uniqueMatches = data.matches.filter((match, index, self) => {
+            return index === self.findIndex((m) => m.job_id === match.job_id || m.jobseeker_id === match.jobseeker_id);
+          });
+          
+          setMatches(uniqueMatches); // Set the unique matches
         } else {
           console.error("Failed to fetch conversations:", response.status);
         }
