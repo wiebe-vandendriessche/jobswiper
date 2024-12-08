@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import httpx
 from circuitbreaker import CircuitBreakerError
 
-from retry_circuit_breaker import fetch_data_with_circuit_breaker
+from retry_circuit_breaker import fetch_data_with_circuit_breaker_profile_service
 from caching import cache_profile, get_profile, remove_profile_cache
 from rest_interfaces.profile_interfaces import IJobSeeker, IRecruiter, IUserProfile, JobSeekerUpdateRequest, JobseekerPreview, RecruiterUpdateRequest
 from main import verify_token_get_user
@@ -39,7 +39,7 @@ async def profile_create(
     data.id=user["id"] #zodat dezelfde id heeft over verschillende databases
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts"
     try:
-        response= await fetch_data_with_circuit_breaker("POST",url,data.model_dump())
+        response= await fetch_data_with_circuit_breaker_profile_service("POST",url,data.model_dump())
         return response.json()  # Return the response from the external service
     except CircuitBreakerError:
         raise HTTPException(
@@ -68,7 +68,7 @@ async def profile_get_preview(
     """
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts/{user_id}/preview"
     try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
+        response = await fetch_data_with_circuit_breaker_profile_service("GET",url)
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(
@@ -105,7 +105,7 @@ async def profile_get(
         return json.loads(cache)
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/accounts/{user["username"]}"
     try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
+        response = await fetch_data_with_circuit_breaker_profile_service("GET",url)
         cache_profile(user["username"],response.text)
         return response.json()
     except CircuitBreakerError:
@@ -136,7 +136,7 @@ async def update_job_seeker(username: str, update_data: JobSeekerUpdateRequest,u
         )      
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/job_seeker/{username}"
     try:
-        response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
+        response = await fetch_data_with_circuit_breaker_profile_service("PUT",url,update_data.model_dump())
         #clear the original cache because you updated the person
         remove_profile_cache(username)
         return response.json()
@@ -168,7 +168,7 @@ async def update_recruiter(username:str,update_data:RecruiterUpdateRequest,user:
         )      
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/recruiter/{username}"
     try:
-        response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
+        response = await fetch_data_with_circuit_breaker_profile_service("PUT",url,update_data.model_dump())
         #remove from cache
         remove_profile_cache(username)
         return response.json()

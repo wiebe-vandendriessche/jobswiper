@@ -4,7 +4,7 @@ from typing import Annotated, Union
 from fastapi import APIRouter, Depends, HTTPException
 import httpx
 from circuitbreaker import CircuitBreakerError
-from retry_circuit_breaker import fetch_data_with_circuit_breaker
+from retry_circuit_breaker import fetch_data_with_circuit_breaker_job_service, fetch_data_with_circuit_breaker_payment, fetch_data_with_circuit_breaker_profile_service
 from rabbit import PikaPublisher
 from caching import cache_all_jobs, cache_job, get_all_jobs_cache, get_job, remove_all_jobs_cache, remove_job_cache
 from rest_interfaces.job_interfaces import IJob, IJobPreview, JobUpdateRequest
@@ -28,7 +28,7 @@ QUEUE_NAME = "job_update"
 async def check_recruiter_credentials(user_id: str):
     url = f"{PROFILE_MANAGEMENT_SERVICE_URL}/recruiter/{user_id}/credentials"
     try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
+        response = await fetch_data_with_circuit_breaker_profile_service("GET",url)
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(
@@ -47,7 +47,7 @@ async def check_recruiter_credentials(user_id: str):
 async def authorize_credit_card(user_id: str, status: int):
     url = f"{PAYMENT_SERVICE_URL}/authorize"
     try:
-        response = await fetch_data_with_circuit_breaker("POST",url,{"user_id": user_id, "status": status})
+        response = await fetch_data_with_circuit_breaker_payment("POST",url,{"user_id": user_id, "status": status})
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(
@@ -62,18 +62,22 @@ async def authorize_credit_card(user_id: str, status: int):
 # ================= Publishen naar job_update rabbitmq
 async def publish_to_rabbitmq(job_id: str, user_id: str):
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user_id}/{job_id}"
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url)
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=f"Publishing on queue failed: {response.text}",
-            )
+    try:
+        response = await fetch_data_with_circuit_breaker_job_service("POST",url)
         return response.json()
+    except CircuitBreakerError:
+        raise HTTPException(
+            status_code=503, detail="Service unavailable (circuit open)"
+        )
+    except httpx.HTTPStatusError:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Publishing on queue failed: {response.text}",
+        )
 
 
-
-@Jobs_router.post("/")  # START SAGA
+#--------------------------------------------START SAGA----------------------------
+@Jobs_router.post("/")  
 async def job_create(
     user: Annotated[dict, Depends(verify_token_get_user)],
     job_data: IJob,
@@ -95,7 +99,7 @@ async def job_create(
     job_data.posted_by_uuid=user["id"]
     try:
         url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs"
-        response = await fetch_data_with_circuit_breaker("POST",url,job_data.model_dump())
+        response = await fetch_data_with_circuit_breaker_job_service("POST",url,job_data.model_dump())
         job_id = response.json().get("id")  # Retrieve job ID
         remove_all_jobs_cache(user["id"])
 
@@ -145,7 +149,7 @@ async def get_all_jobs(
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}"
     try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
+        response = await fetch_data_with_circuit_breaker_job_service("GET",url)
         jobs = response.json()  # Assumes the service returns a list of jobs
         cache_all_jobs(user["id"], json.dumps(jobs))  # Cache the jobs data
         return jobs  # Assumes the service returns a list of jobs
@@ -175,7 +179,7 @@ async def job_get_preview(
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{job_id}/preview"
     try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
+        response = await fetch_data_with_circuit_breaker_job_service("GET",url)
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(
@@ -208,7 +212,7 @@ async def job_get(
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
 
     try:
-        response = await fetch_data_with_circuit_breaker("GET",url)
+        response = await fetch_data_with_circuit_breaker_job_service("GET",url)
         cache_job(job_id, user["id"], response.text)  # Cache the job details
         return response.json()
     except CircuitBreakerError:
@@ -245,7 +249,7 @@ async def job_update(
 
     url = f"{JOB_MANAGEMENT_SERVICE_URL}/jobs/{user["id"]}/{job_id}"
     try:
-        response = await fetch_data_with_circuit_breaker("PUT",url,update_data.model_dump())
+        response = await fetch_data_with_circuit_breaker_job_service("PUT",url,update_data.model_dump())
         remove_job_cache(job_id, user["id"])  # Clear the cache for the updated job
         remove_all_jobs_cache(user["id"])
         return response.json()
