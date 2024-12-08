@@ -15,6 +15,13 @@ function SwipeCards(props) {
 
     const [recoms, setRecoms] = useState([]); // Will hold the recommendations (jobs or profiles)
 
+    useEffect(() => {
+        console.log("recoms (after state update):", recoms); // Check recoms after update
+    }, [recoms]);
+
+
+
+
     const [lastDirection, setLastDirection] = useState();
     const [isSwiping, setIsSwiping] = useState(false); // Track swipe state
     const childRefs = useRef([]);
@@ -24,6 +31,7 @@ function SwipeCards(props) {
 
     // Fetch recommendations based on the user type (jobseeker or recruiter)
     useEffect(() => {
+        console.log("useEffect triggered");
         const fetchRecommendations = async () => {
             if (!authData.userType || !authData.selected_user_id) return; // Ensure userType and selected_user_id exist
 
@@ -42,7 +50,8 @@ function SwipeCards(props) {
                         headers: headers,
                     });
                     const data = await response.json();
-                    setRecoms(data.recommendations || []); // Set recommendations (job IDs)
+                    console.log("Jobseeker recommendations:", data); // Log the fetched data
+                    setRecoms(data); // Set the list of UUIDs directly in recoms
                 } else if (authData.userType === "recruiter" && authData.selected_job_id) {
                     // Fetch jobseeker profile recommendations for the recruiter based on selected job
                     response = await fetch(`${apiBaseUrl}/matches/recommendations/job/${authData.selected_job_id}`, {
@@ -50,16 +59,16 @@ function SwipeCards(props) {
                         headers: headers,
                     });
                     const data = await response.json();
-                    setRecoms(data.recommendations || []); // Set recommendations (profile IDs of jobseekers)
+                    console.log("Recruiter recommendations:", data); // Log the fetched data
+                    setRecoms(data); // Set the list of UUIDs directly in recoms
                 }
             } catch (error) {
                 console.error("Error fetching recommendations:", error);
             }
         };
 
-        fetchRecommendations();
-    }, [authData, jwtToken]); // Ensure jwtToken is included as dependency
-
+        window.onload = fetchRecommendations;  // Trigger fetch when the page is loaded
+    }, []); // Ensure jwtToken is included as dependency
 
 
     const swipe = (dir) => {
@@ -113,25 +122,22 @@ function SwipeCards(props) {
             <div className="swipeCards">
                 <div className="swipeCards__cardContainer">
                     {recoms.length > 0 ? (
-                        recoms.map((item, index) => (
+                        recoms.map((uuid, index) => (
                             <TinderCard
                                 ref={(el) => (childRefs.current[index] = el)}
-                                key={item.id || item.name}
+                                key={uuid}  // Using UUID as the key
                                 className="swipe"
                                 preventSwipe={["up", "down"]}
-                                onSwipe={(dir) => swiped(dir, item.name)}
-                                onCardLeftScreen={() => outOfFrame(item.name)}
+                                onSwipe={(dir) => swiped(dir, uuid)} // Assuming swiped uses UUID
+                                onCardLeftScreen={() => outOfFrame(uuid)} // Assuming outOfFrame uses UUID
                             >
-                                <div
-                                    style={{ backgroundImage: `url(${item.url || ''})` }}
-                                    className="card"
-                                >
-                                    <h3>{item.name}</h3>
+                                <div className="card">
+                                    <h3>{uuid}</h3>  {/* Display the UUID */}
                                 </div>
                             </TinderCard>
                         ))
                     ) : (
-                        <div>No recommendations available</div> // Placeholder if no recommendations are loaded
+                        <div>No recommendations available</div>
                     )}
                 </div>
             </div>
