@@ -89,6 +89,30 @@ class JobSeekerRepository(IJobSeekerRepository):
                 )
             return None
 
+    async def find_by_uuid(self, userid: str) -> Optional[JobSeeker]:
+        with self.get_db() as db:
+            job_seeker = (
+                db.query(JobSeekerModel).filter(JobSeekerModel.id == userid).first()
+            )
+            if job_seeker:
+                return JobSeeker(
+                    id=job_seeker.id,
+                    username=job_seeker.username,
+                    first_name=job_seeker.first_name,
+                    last_name=job_seeker.last_name,
+                    email=job_seeker.email,
+                    location=job_seeker.location,
+                    phone_number=job_seeker.phone_number,
+                    education_level=job_seeker.education_level,
+                    years_of_experience=job_seeker.years_of_experience,
+                    availability=job_seeker.availability,
+                    salary=Salary(job_seeker.salary_min, job_seeker.salary_max),
+                    interests=job_seeker.interests,
+                    qualifications=job_seeker.qualifications,
+                    date_of_birth=str(job_seeker.date_of_birth),
+                )
+            return None
+
     async def save(self, job_seeker: JobSeeker):
         with self.get_db() as db:
             db_job_seeker = JobSeekerModel(

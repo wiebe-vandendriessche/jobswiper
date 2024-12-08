@@ -1,20 +1,22 @@
 body {
-  overflow-x: hidden;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
 }
 
 .App {
   text-align: center;
-  font-family: 'Roboto', sans-serif;
 }
 
 .MainView {
-  font-family: 'Roboto', sans-serif;
   text-align: center;
+  font-family: 'Roboto', sans-serif;
+  height: 100vh;
+  /* Ensure full height */
 }
 
 .AuthView {
   margin: 5%;
   text-align: left;
+  height: 100%;
+  /* Allow content to determine height */
 }
-
-

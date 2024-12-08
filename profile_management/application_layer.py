@@ -68,13 +68,20 @@ class ProfileManagementService:
             return
         raise NameError(f"Recruiter with username {username} does not exist.")
 
-    async def get_user(self, username: str):
-        recruiter = await self.recruiter_repo.find_by_username(username)
-        jobseeker = await self.job_seeker_repo.find_by_username(username)
-        if recruiter:
-            return recruiter
+    async def get_user_perview(self, user_id: str):
+        jobseeker = await self.job_seeker_repo.find_by_uuid(user_id)
         if jobseeker:
             return jobseeker
+        # in case no users are found
+        raise NameError(f"User with id {user_id} does not exist.")
+
+    async def get_user(self, username: str):
+        jobseeker = await self.job_seeker_repo.find_by_username(username)
+        recruiter = await self.recruiter_repo.find_by_username(username)
+        if jobseeker:
+            return jobseeker
+        if recruiter:
+            return recruiter
         # in case no users are found
         raise NameError(f"User with username {username} does not exist.")
 
@@ -83,7 +90,7 @@ class ProfileManagementService:
         account_r = await self.recruiter_repo.find_by_username(username)
         # If either returns a non-None object, the username exists
         return account_js is not None or account_r is not None
-    
+
     async def check_existing_uuid(self, uuid: str):
         account = await self.recruiter_repo.find_by_uuid(uuid)
         return account is not None

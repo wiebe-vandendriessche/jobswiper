@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import ProfileCreate from './ProfileCreate';
 import ProfileUpdate from './ProfileUpdate';
 import JobDashboard from './JobDashboard';
+import { useContext } from 'react';
+import { AuthContext } from './../AuthContext';
+import { Button, Typography, CircularProgress, Box, Paper } from '@mui/material';
 
-//const apiBaseUrl = "http://api_gateway:8080";
 const apiBaseUrl = "http://localhost:8081";
-//const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
-const AuthenticatedView = ({ userData, onLogout}) => {
+const AuthenticatedView = ({ userData, onLogout }) => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  // context for full application
+  const { authData, setAuthData } = useContext(AuthContext);
 
   const fetchProfile = async () => {
     try {
@@ -26,6 +29,13 @@ const AuthenticatedView = ({ userData, onLogout}) => {
       if (response.status === 200) {
         const data = await response.json();
         setProfile(data); // update profile in component state
+        setAuthData({
+          selected_user_id: data.id,
+          selected_profile_name: data.username,
+          userType: data.company_name ? 'recruiter' : 'jobseeker',
+          selected_job_id: null,
+          selected_job_name: "",
+        });
       } else if (response.status === 404) {
         const errorData = await response.json();
         console.warn('Profile not found:', errorData.detail.detail);
@@ -36,6 +46,11 @@ const AuthenticatedView = ({ userData, onLogout}) => {
     } catch (error) {
       console.error('Error fetching profile:', error);
       setHasError(true);
+      setAuthData({
+        selected_user_id: '',
+        userType: '',
+        selected_job_id: null,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -48,52 +63,67 @@ const AuthenticatedView = ({ userData, onLogout}) => {
   }, [userData?.username]);
 
   const renderJobseekerProfile = (profile) => (
-    <div>
-      <h2>Jobseeker Profile</h2>
-      <p><strong>Username:</strong> {profile.username}</p>
-      <p><strong>First Name:</strong> {profile.first_name}</p>
-      <p><strong>Last Name:</strong> {profile.last_name}</p>
-      <p><strong>Email:</strong> {profile.email}</p>
-      <p><strong>Location:</strong> {profile.location}</p>
-      <p><strong>Phone Number:</strong> {profile.phone_number || "Not provided"}</p>
-      <p><strong>Qualifications:</strong> {profile.qualifications.join(', ')}</p>
-      <p><strong>Salary:</strong> {JSON.stringify(profile.salary)}</p>
-      <p><strong>Education Level:</strong> {profile.education_level}</p>
-      <p><strong>Years of Experience:</strong> {profile.years_of_experience}</p>
-      <p><strong>Availability:</strong> {profile.availability}</p>
-      <p><strong>Date of Birth:</strong> {profile.date_of_birth || "Not provided"}</p>
-      <p><strong>Interests:</strong> {profile.interests.join(', ')}</p>
-      <ProfileUpdate profile={profile} username={userData.username} fetchProfile={fetchProfile} onLogout={onLogout} />
-    </div>
+    <Box component={Paper} sx={{ padding: 4, marginTop: 2 }}>
+      <Typography variant="h5">Jobseeker Profile</Typography>
+      <Typography><strong>Username:</strong> {profile.username}</Typography>
+      <Typography><strong>First Name:</strong> {profile.first_name}</Typography>
+      <Typography><strong>Last Name:</strong> {profile.last_name}</Typography>
+      <Typography><strong>Email:</strong> {profile.email}</Typography>
+      <Typography><strong>Location:</strong> {profile.location}</Typography>
+      <Typography><strong>Phone Number:</strong> {profile.phone_number || "Not provided"}</Typography>
+      <Typography><strong>Qualifications:</strong> {profile.qualifications.join(', ')}</Typography>
+      <Typography><strong>Salary:</strong> {JSON.stringify(profile.salary)}</Typography>
+      <Typography><strong>Education Level:</strong> {profile.education_level}</Typography>
+      <Typography><strong>Years of Experience:</strong> {profile.years_of_experience}</Typography>
+      <Typography><strong>Availability:</strong> {profile.availability}</Typography>
+      <Typography><strong>Date of Birth:</strong> {profile.date_of_birth || "Not provided"}</Typography>
+      <Typography><strong>Interests:</strong> {profile.interests.join(', ')}</Typography>
+      <Box sx={{ marginTop: 4 }}>
+        <ProfileUpdate profile={profile} username={userData.username} fetchProfile={fetchProfile} onLogout={onLogout} />
+      </Box>
+    </Box >
   );
 
   const renderRecruiterProfile = (profile) => (
-    <div>
-      <h2>Recruiter Profile</h2>
-      <p><strong>Username:</strong> {profile.username}</p>
-      <p><strong>First Name:</strong> {profile.first_name}</p>
-      <p><strong>Last Name:</strong> {profile.last_name}</p>
-      <p><strong>Email:</strong> {profile.email}</p>
-      <p><strong>Location:</strong> {profile.location}</p>
-      <p><strong>Phone Number:</strong> {profile.phone_number || "Not provided"}</p>
-      <p><strong>Company Name:</strong> {profile.company_name}</p>
-      <ProfileUpdate profile={profile} username={userData.username} fetchProfile={fetchProfile} onLogout={onLogout} />
-      <JobDashboard profile={profile} username={userData.username}/>
-    </div>
+    <Box component={Paper} sx={{ padding: 4, marginTop: 2 }}>
+      <Typography variant="h5">Recruiter Profile</Typography>
+      <Typography><strong>Username:</strong> {profile.username}</Typography>
+      <Typography><strong>First Name:</strong> {profile.first_name}</Typography>
+      <Typography><strong>Last Name:</strong> {profile.last_name}</Typography>
+      <Typography><strong>Email:</strong> {profile.email}</Typography>
+      <Typography><strong>Location:</strong> {profile.location}</Typography>
+      <Typography><strong>Phone Number:</strong> {profile.phone_number || "Not provided"}</Typography>
+      <Typography><strong>Company Name:</strong> {profile.company_name}</Typography>
+      {/* Profile Update Section with Margin */}
+      <Box sx={{ marginTop: 4 }}>
+        <ProfileUpdate profile={profile} username={userData.username} fetchProfile={fetchProfile} onLogout={onLogout} />
+      </Box>
+
+      {/* Job Dashboard Section with Margin */}
+      <Box sx={{ marginTop: 4 }}>
+        <JobDashboard profile={profile} username={userData.username} />
+      </Box>
+    </Box>
   );
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}><CircularProgress /></Box>;
   }
 
   if (hasError) {
-    return <div>There was an error loading your profile. Please try again later.</div>;
+    return <Typography color="error" variant="h6" sx={{ marginTop: 2 }}>There was an error loading your profile. Please try again later.</Typography>;
   }
 
   return (
-    <div>
-      <h1>Welcome, {userData?.username} (ID: {userData?.id})</h1>
-      <button onClick={onLogout}>Logout</button>
+    <Box sx={{ padding: 2 }}>
+      <Typography variant="h4" gutterBottom>
+        Welcome, {userData?.username}
+      </Typography>
+      <Typography variant="body2" sx={{ color: 'text.secondary', marginBottom: 2 }}>
+        (ID: {userData?.id})
+      </Typography>      <Button variant="contained" color="primary" onClick={onLogout} sx={{ marginBottom: 2 }}>
+        Logout
+      </Button>
 
       {profile ? (
         profile.company_name
@@ -101,13 +131,12 @@ const AuthenticatedView = ({ userData, onLogout}) => {
           : renderJobseekerProfile(profile)
       ) : (
         <div>
-          <h2>No Profile Found</h2>
-          <ProfileCreate username={userData.username} setProfile={setProfile} onLogout={onLogout} />
+          <Typography variant="h6" sx={{ marginBottom: 2 }}>No Profile Found</Typography>
+          <ProfileCreate username={userData.username} userid={userData.id} setProfile={setProfile} onLogout={onLogout} />
         </div>
       )}
-    </div>
+    </Box>
   );
 };
 
 export default AuthenticatedView;
-

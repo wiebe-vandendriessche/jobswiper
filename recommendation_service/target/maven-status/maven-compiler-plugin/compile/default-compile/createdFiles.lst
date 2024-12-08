@@ -1,0 +1,6 @@
+org\example\RabbitClient.class
+org\example\Main.class
+org\example\Salary.class
+org\example\Job.class
+org\example\JobSeeker.class
+org\example\ElasticDB.class
