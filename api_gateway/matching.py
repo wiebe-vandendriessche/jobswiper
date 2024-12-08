@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import httpx
 from dataclasses import asdict
 from circuitbreaker import CircuitBreakerError
-from retry_circuit_breaker import fetch_data_with_circuit_breaker
+from retry_circuit_breaker import fetch_data_with_circuit_breaker_matching
 from rest_interfaces.matching_interfaces import ISwipe, Swipe
 from rabbit import PikaPublisher
 from main import verify_token_get_user
@@ -31,7 +31,7 @@ async def user_recommendations(
 
     url = f"{MATCHING_SERVICE_URL}/recommendations/user/{user_id}"  # Replace with actual URL
     try:
-        response = await fetch_data_with_circuit_breaker("GET", url)
+        response = await fetch_data_with_circuit_breaker_matching("GET", url)
         return response.json()  # Return the data if the response is successful
     except CircuitBreakerError:
         raise HTTPException(
@@ -61,7 +61,7 @@ async def job_recommendations(
     """
     url = f"{MATCHING_SERVICE_URL}/recommendations/job/{job_id}"  # Replace with actual URL
     try:
-        response = await fetch_data_with_circuit_breaker("GET", url)
+        response = await fetch_data_with_circuit_breaker_matching("GET", url)
         return response.json()  # Return the data if the response is successful
     except CircuitBreakerError:
         raise HTTPException(

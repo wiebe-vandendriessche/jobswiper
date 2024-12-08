@@ -6,7 +6,7 @@ from circuitbreaker import CircuitBreakerError
 
 from rest_interfaces.messaging_interfaces import IConversationList
 from main import verify_token_get_user
-from retry_circuit_breaker import fetch_data_with_circuit_breaker
+from retry_circuit_breaker import fetch_data_with_circuit_breaker_messaging
 
 
 Messaging_router = APIRouter(prefix="/messaging", tags=["messaging"])
@@ -29,7 +29,7 @@ async def get_conversations(
         )
     url = f"{MESSAGING_SERVICE_URL}/conversations/{user_id}"
     try:
-        response = await fetch_data_with_circuit_breaker("GET", url)
+        response = await fetch_data_with_circuit_breaker_messaging("GET", url)
         return response.json()
     except CircuitBreakerError:
         raise HTTPException(

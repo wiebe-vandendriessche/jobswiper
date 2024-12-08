@@ -148,6 +148,65 @@ When the creation of the Jobseekers finishes, the scripts starts doing 8 calls f
 
 When the script finishes, it's time to move on to the next step.
 
+#### 2. Create your own profile as a Recruiter
+For this step, you are going to manually sign-up, login and create a profile as a Recruiter.
+This can easily be done using the UI (http://localhost:3000).
+Once landed on the UI, follow these steps:
+1. Click on the profile icon in the top left of your screen.
+2. You don't have an account yet, so click on `Sign up` to create one.
+3. Create an account by choosing your username and password.
+4. Login using the account credentials you just created. You should be welcomed on your personal profile page!
+5. Since you're going to be posting jobs, you'll fill in a Recruiter profile. (click the toggle button to toggle to Recruiter)
+6. Fill in all the fields as you like.
+7. Click `create profile`. You should see your newly created profile with your personal information.
+8. (optional) You can change you're company name when you switch jobs.
+9. Start creating a new job post by clicking `CREATE JOB` at the bottom of the page.
+10. Fill in the fields, BUT pay some attention to the following ones:
+- `Location`: will be used to recommend certain Jobseekers. Choose one of the following: `Bangalore,Beijing,Stockholm,Helsinki,Vancouver,Toronto,Ghent`
+- `Requirements`: this has to be a comma-seperated list -> the requiremends will be used to recommend your job to Jobseekers meeting at least one of your stated requirements. For the best results, use all or most of these requirements: `Bachelor of Science in Computer Science,Master of Science in Artificial Intelligence,PhD in Data Science,Diploma in Software Engineering,Certification in Cloud Computing,Course in Cybersecurity,Certification in Machine Learning,Course in Blockchain Technology,Certification in Full-Stack Development,Diploma in Information Technology,Bachelor of Engineering in Computer Systems,Diploma in Embedded Systems,Master of Science in Robotics,Bachelor of Science in Data Analytics,Certification in DevOps,Course in Mobile Application Development,Diploma in Network Engineering`
+11. Click `Create job`.
+
+Now that you have created a job post, you are going to create your own Jobseeker profile to search for your newly created job.
+
+
 #### 2. Create your own profile as a Jobseeker
 For this step, you are going to manually sign-up, login and create a profile as a Jobseeker.
 This can easily be done using the UI (http://localhost:3000).
+Once landed on the UI, follow these steps:
+1. Click on the profile icon in the top left of your screen.
+2. You don't have an account yet, so click on `Sign up` to create one.
+3. Create an account by choosing your username and password.
+4. Login using the account credentials you just created. You should be welcomed on your personal profile page!
+5. Since you're going to be looking for jobs, you'll fill in a Jobseeker profile. (this is selected by default)
+6. Fill in all the fields as you like, BUT pay some extra attention to the following ones:
+- `Qualifications`: This is again a comma-separated field. Enter at least one qualification that you added when creating the job.
+- `Location`: Enter the same location as you chose to create the job. This will ensure your job will be recommend to you as a Jobseeker.
+- `Salary`: best kept to the default value of `{}`
+7. Click `create profile`. You should see your newly created profile with your personal information.
+8. (optional) Made a mistake? You can update you personal information at the bottom of the page.
+
+Now that you've created your own Jobseeker profile, it's time to move on to the next step.
+
+#### 3. Start swiping!
+You're still on the profiles tab? Click `Job Finder` on the top menu to go to the swipe page.
+
+(If you're seeing no recommendations, try refreshing the page and wait a couple seconds)
+
+You can swipe by dragging the cards or by using the buttons.
+- Swipe left to dislike a job offering
+- Swipe right to like a job offering
+
+Keep swiping until you found the job you created! Swipe this job to the right and only then you can move on to the next step.
+
+#### 4. Log back in with your Recruiter profile
+1. Go back to the profile page.
+2. Scroll down until you see the job you created.
+3. Click on the job. It should have turned green.
+4. Click on `Job Finder` to start swiping (refresh the page if necessary)
+5. Keep swiping until you find your Jobseeker profile and swipe it right.
+
+IT'S A MATCH! Now that your Recruiter and Jobseeker profiles both swiped right on each other, you should see a new match in your notifications.
+
+#### 5. View your matches
+1. Click on the notifications icon in the top right corner.
+2. Your matches are displayed here.
