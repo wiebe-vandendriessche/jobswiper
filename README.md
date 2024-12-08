@@ -210,3 +210,18 @@ IT'S A MATCH! Now that your Recruiter and Jobseeker profiles both swiped right o
 #### 5. View your matches
 1. Click on the notifications icon in the top right corner.
 2. Your matches are displayed here.
+
+
+## How to test the SAGA
+The saga is explained in the file uploaded on Ufora. To test the saga, run the `showcase_saga.sh` script using the following commannds in the root folder of this project.
+```bash
+chmod +x showcase_saga.sh
+./showcase_saga.sh
+```
+This script will create a job where the payment value is set to 0 and a job where the value is set to 1.
+The first one will fail in the payment service since the payment won't be authorized. This will rollback the previous step of storing the new job in the database. The job will be deleted from the database and a 500-status will be returned.
+
+The second one will succeed and a new job will posted on the job_update queueu of the recommendations service.
+
+The output in the api_gateway container should look like this:
+![output saga](./screenshots/saga_output.png)
