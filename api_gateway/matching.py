@@ -133,7 +133,7 @@ async def job_swipe(
 
     """
     # -----not done yet: check if userid matches swipe userid-----
-    if user["id"] == swipe.recruiter_id:
+    if user["id"] != swipe.recruiter_id:
         raise HTTPException(
             status_code=403,
             detail="recruiter_id does not match the user who performed swipe: Unauthorized action.",
