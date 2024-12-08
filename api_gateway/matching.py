@@ -129,10 +129,16 @@ async def job_swipe(
     swipe: ISwipe, user: Annotated[dict, Depends(verify_token_get_user)]
 ):
     """
-    Swipe right or left on a job listing, based on the boolean in decision
+    Swipe right or left on a jobseeker profile, based on the boolean in decision
 
     """
     # -----not done yet: check if userid matches swipe userid-----
+    if user["id"] == swipe.recruiter_id:
+        raise HTTPException(
+            status_code=403,
+            detail="recruiter_id does not match the user who performed swipe: Unauthorized action.",
+        )
+
     try:
         newswipe = Swipe(
             subject="job",
