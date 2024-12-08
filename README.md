@@ -1,42 +1,51 @@
 # Microservices Application
 
-This repository defines a microservices-based architecture, using Docker Compose to orchestrate various services, including frontend, API Gateway, authentication, profile management, and databases. The system is designed to be modular, with the intention of adding additional services, such as Job Service, Matching Service, and Recommendation Service.
+This repository defines a microservices-based architecture, using Docker Compose to orchestrate various services. The system is designed to be modular, with the intention of easily sclaing it in the future.
 
 ## Overview of Services
 
-### 1. **Frontend**
-The frontend service is responsible for serving the React-based UI of the application. It interacts with the API Gateway to retrieve data and perform operations such as authentication, profile management, job matching, etc.
+We will shortly summerize the structure of each service. The used database with each service is not mentioned seperatly.
 
-- **Ports**: Exposes the application on `localhost:3000`.
-- **Dependencies**: Depends on the API Gateway for routing API requests.
+### 1. **Gateway API (`api_gateway`) **
+We have build our own gateway in FASTAPI, that fungates as a caching proxy and an orchestrator when multiple actions need to take place (including the SAGA). We have replicated this gateway threefold (with a nginx loadbalancer in front of it), this way offering redundancy and availability to our customers. Each of these instances has their own Redis cache, providing high speed response times and lower traffic to other called services. This service also implements retry-strategies, with random exponential backoff and implements a circuitbreaker if to much failure occurs in one service.
+It also protects other microservices endpoints, by checking if the user is logged in and the user is allowed to perform that action using the auth service (discussed later).
 
-### 2. **MySQL Authentication Database (`mysql_auth`)**
-A MySQL database for storing user authentication data, including login credentials and session information. It is used by the JWT Authentication service for secure user authentication.
+- Structure of the gateway api service
+  - `main.py` starts the FASTAPI app, defines the calls for login/signup, adds routers to other services
+  - `<servicename>.py` are the endpoints that relay to that service, and adds protection to those private endpoints
+  - `caching.py` defined all the caching functions used 
+  - `retry_circuit_breaker.py`defines logic for combination of threadwide circuitbreaker and retry-strategies
+  - `rest_interfaces/<servicename>_interfaces.py` are all the interfaces used in communication with the mentioned service
+  - `rabbit.py` is code for defining a RabbitMQ publishing channel, used in `matching.py`
 
-- **Volumes**:
-  - `msql_auth_data`: Persists the authentication database data.
 
-### 3. **JWT Authentication Service (`jwt_auth`)**
-This service handles user authentication via JWT tokens, communicating with the MySQL authentication database (`mysql_auth`). It validates user credentials, generates JWT tokens, and handles authorization.
-
-- **Dependencies**: Depends on the `mysql_auth` service.
-
-### 4. **API Gateway (`api_gateway`)**
-The API Gateway serves as the entry point for all external requests. It routes API calls to the appropriate microservices, such as authentication, profile management, job matching, and recommendations.
+### 2. **JWT Authentication service (`jwt_auth`)**
+This service used the JWT library, to hash passwords and save these together with the useraccounts in `mysql_auth` database. It could provide a token that expired and could also be cached in the gateway for maintaining a session. This essentially fungates as our OAuth service. 
 
 - **Ports**: Exposes API Gateway on `localhost:8080`.
 - **Dependencies**: Depends on the `jwt_auth` service.
 
-### 5. **MySQL Profiles Database (`mysql_profiles`)**
-A MySQL database for storing user profiles, including personal details, preferences, job history, etc. This database is accessed by the Profile Management service.
+### 3. **Profile Management Service (`profile_management`)**
+This service is responsible for CRUD actions on the profile of a JobSeeker or a Recruiter. It is designed to follow the union architecture, where there are only inward dependencies. It connects to a mysql database `mysql_profiles`. 
 
-- **Volumes**:
-  - `msql_profiles_data`: Persists the profiles database data.
+- Structure of the Profile Management Service:
+  - `main.py` defines all the endpoints and uses the application layer
+  - `application_layer` contains most of the logic , using dependency injection to insert the used DBadapters and PublisherAdapters
+  - `domain_model` contains the state and minor functionality
+  - `interfaces.py` define the interfaces for the adapters (application layer)
+  - `rest_interfaces/*` contain the interfaces/ contracts with the gatewayAPI
+  - `publisher.py` defines the publisher that implements the publisher adapter, and sends updates of the profile to the Recommendation service
 
-### 6. **Profile Management Service (`profile_management`)**
-This service manages user profile data, including creation, updates, and retrieval of profile details from the `mysql_profiles` database.
+### 4. **Job Management Service (`job_management_service`)**
+This service is responsible for CRUD actions on the jobs for a given Recruiter. It is designed to follow the union architecture, just like the previous service and it almost has the identical same structure with some different functionalities. It connects to a mysql database `mysql_jobs`.
 
-- **Dependencies**: Depends on the `mysql_profiles` service.
+- Structure of the Jobs Management Service:
+  - `main.py` defines all the endpoints and uses the application layer
+  - `application_layer` contains most of the logic , using dependency injection to insert the used DBadapters and PublisherAdapters
+  - `domain_model` contains the state and minor functionality
+  - `interfaces.py` define the interfaces for the adapters (application layer)
+  - `rest_interfaces/*` contain the interfaces/ contracts with the gatewayAPI
+  - `publisher.py` defines the publisher that implements the publisher adapter, and sends updates of the job to the Recommendation service
 
 
 ### 7. **Job Service (Future Addition)**
