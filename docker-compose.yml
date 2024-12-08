@@ -214,7 +214,7 @@ services:
     build:
       context: ./recommendation_service
     container_name: recommendation
-
+    restart: always
     depends_on:
       - elasticsearch
       - mysql_matching
@@ -231,6 +231,8 @@ services:
       - MYSQL_USER=user
       - MYSQL_PASSWORD=user_password
       - MYSQL_HOST=mysql_matching
+      - JOB_BUS=job_update
+      - JOBSEEKER_BUS=jobseeker_update
     networks:
       - private-network
 
@@ -239,6 +241,7 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.7.1
     container_name: elasticsearch
+    restart: always
     environment:
       - discovery.type=single-node
       - cluster.name=docker-cluster
