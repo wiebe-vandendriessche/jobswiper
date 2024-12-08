@@ -15,6 +15,7 @@ services:
       
   mysql_auth:
     image: mysql:8.0
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: auth_db
@@ -47,6 +48,7 @@ services:
   nginx_api_gateway:
     image: nginx:latest
     container_name: nginx_api_gateway
+    restart: always
     ports:
       - "8081:80"
     volumes:
@@ -88,6 +90,7 @@ services:
 
   mysql_profiles:
     image: mysql:8.0
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: profiles_db
@@ -123,6 +126,7 @@ services:
 
   mysql_matching:
     image: mysql:8.0
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: matching_db
@@ -136,6 +140,7 @@ services:
 
   mysql_jobs:
     image: mysql:8.0
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: jobs_db
