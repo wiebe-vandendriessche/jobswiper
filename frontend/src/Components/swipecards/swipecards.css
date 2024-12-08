@@ -50,3 +50,8 @@
     justify-content: space-evenly;
     color: #333;
 }
+.errorMessage {
+    color: red;
+    font-weight: bold;
+    margin-top: 10px;
+}
