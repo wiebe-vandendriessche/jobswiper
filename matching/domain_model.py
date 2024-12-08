@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 
@@ -6,11 +7,13 @@ class Recommendation:
         self,
         user_id: str,
         job_id: str,
+        recruiter_id: str,
         user_likes: Optional[bool] = None,
         recruiter_likes: Optional[bool] = None,
     ) -> None:
         self.user_id = user_id
         self.job_id = job_id
+        self.recuiter_id = recruiter_id
         self.user_likes = user_likes
         self.recruiter_likes = recruiter_likes
 
@@ -28,3 +31,14 @@ class Recommendation:
             return True
         else:
             return False
+
+    def to_json(self) -> str:
+        return json.dumps(
+            {
+                "user_id": self.user_id,
+                "job_id": self.job_id,
+                "recruiter_id": self.recuiter_id,
+                "user_likes": self.user_likes,
+                "recruiter_likes": self.recruiter_likes,
+            }
+        )
