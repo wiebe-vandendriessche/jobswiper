@@ -108,7 +108,7 @@ function SwipeCards(props) {
             }
         };
 
-        window.onload = fetchRecommendations;
+        fetchRecommendations()
     }, [authData, jwtToken, location]); // Trigger only when authData or jwtToken changes
 
     const swipe = (dir) => {
@@ -128,19 +128,19 @@ function SwipeCards(props) {
     const swiped = async (direction, uuid) => {
         console.log(`Swiping: ${uuid} - Direction: ${direction}`);  // Confirm function execution
         setLastDirection(direction);
-    
+
         try {
             const headers = {
                 'Authorization': `Bearer ${jwtToken}`,
                 'Content-Type': 'application/json',
             };
-    
+
             const decision = direction === "right"; // Convert direction to a boolean
             let payload;
             let endpoint;
-    
+
             console.log('authData:', authData);  // Check if user IDs and type are valid
-    
+
             if (authData.userType === "jobseeker") {
                 payload = {
                     user_id: authData.selected_user_id,
@@ -154,7 +154,7 @@ function SwipeCards(props) {
                     console.error("No job selected for the recruiter. Cannot register swipe.");
                     return;
                 }
-    
+
                 payload = {
                     user_id: uuid,
                     job_id: authData.selected_job_id,
@@ -163,22 +163,22 @@ function SwipeCards(props) {
                 };
                 endpoint = `${apiBaseUrl}/matches/swipe/job`;
             }
-    
+
             // Log the payload and endpoint
             console.log('Payload:', payload);
             console.log('Endpoint:', endpoint);
-    
+
             // Make the POST request to register the swipe
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(payload),
             });
-    
+
             if (!response.ok) {
                 throw new Error(`Failed to register swipe: ${response.statusText}`);
             }
-    
+
             console.log("Swipe successfully registered!");
         } catch (error) {
             console.error("Error registering swipe:", error);
