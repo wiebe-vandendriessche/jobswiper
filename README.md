@@ -236,4 +236,5 @@ The output in the api_gateway container should look like this:
 ## How to test the retries and the circuitbraker
 Before updating a profile, you can stop the profile management service in Docker Desktop. Once stopped, attempt the update while monitoring the application logs (in the terminal where you ran docker compose up). You'll notice the application retrying with a random exponential backoff. After three manual update attempts (resulting in a total of nine retries due to internal retries in the gateway), the circuit will open, causing the request to fail fast. At this point, restart the service in Docker Compose. Once the circuit breaker timeout expires, the update process will work again.
 
-DEMO: https://www.youtube.com/watch?v=npgWRbqmcCU&list=PLwvvmknmV0O6YzEvoWnw5Hkp3Lbtj77-m
+## Demo
+https://www.youtube.com/watch?v=npgWRbqmcCU&list=PLwvvmknmV0O6YzEvoWnw5Hkp3Lbtj77-m
